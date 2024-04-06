@@ -1,6 +1,7 @@
 import PostList from "@/app/blog/_component/PostList";
 import { Metadata } from "next";
 import React from "react";
+import SimpleInfo from "@/app/blog/_component/SimpleInfo";
 
 export const metadata: Metadata = {
   title: "예나 지금이나 개발로그",
@@ -8,7 +9,12 @@ export const metadata: Metadata = {
 };
 
 const Page = () => {
-  return <PostList />;
+  return (
+    <>
+      <SimpleInfo />
+      <PostList />
+    </>
+  );
 };
 
 export default Page;
