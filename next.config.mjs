@@ -6,4 +6,4 @@ const nextConfig = {
   swcMinify: true,
 };
 
-module.exports = withContentlayer(nextConfig);
+export default withContentlayer(nextConfig);
