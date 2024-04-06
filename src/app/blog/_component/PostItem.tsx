@@ -11,7 +11,7 @@ const PostItem = ({ post }: { post: Post }) => {
     <Wrap href={`/blog/${post.slug}`}>
       <Title>{post.title}</Title>
       <Description>{post.description}</Description>
-      <Date>{postDate}</Date>
+      <Date>{`${post.category} · ${postDate}`}</Date>
     </Wrap>
   );
 };

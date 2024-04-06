@@ -18,6 +18,7 @@ export default SimpleInfo;
 
 const Wrap = styled.div`
   margin: 2.5rem auto;
+  padding: 0 1rem;
   max-width: 800px;
   display: flex;
   gap: 12px;
