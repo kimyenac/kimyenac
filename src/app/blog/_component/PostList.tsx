@@ -4,7 +4,6 @@ import styled from "@emotion/styled";
 import { getAllPosts } from "@/app/blog/_service/posts";
 import PostItem from "@/app/blog/_component/PostItem";
 
-// todo 테마 맞추기
 const PostList = () => {
   const posts = getAllPosts();
 

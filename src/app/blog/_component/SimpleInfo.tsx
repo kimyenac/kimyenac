@@ -17,8 +17,8 @@ const SimpleInfo = () => {
 export default SimpleInfo;
 
 const Wrap = styled.div`
-  margin: 2.5rem auto;
-  padding: 0 1rem;
+  padding: 2.5rem 1rem;
+  margin: auto;
   max-width: 800px;
   display: flex;
   gap: 12px;
@@ -41,11 +41,11 @@ const Name = styled.div`
   font-size: 18px;
   font-weight: 700;
   line-height: 120%;
-  color: #000;
+  color: ${({ theme }) => theme.color.defaultText};
 `;
 
 const Description = styled.div`
   font-size: 14px;
   line-height: 120%;
-  color: #000;
+  color: ${({ theme }) => theme.color.defaultText};
 `;

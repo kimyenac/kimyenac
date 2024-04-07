@@ -53,29 +53,29 @@ const InfoWrap = styled.div`
 `;
 
 const Category = styled.div`
-  color: #000;
   font-size: 14px;
   text-decoration: none;
   line-height: 120%;
+  color: ${({ theme }) => theme.color.defaultText};
 `;
 
 const Title = styled.div`
-  color: #000;
   font-size: 30px;
   text-decoration: none;
   line-height: 120%;
   font-weight: 700;
+  color: ${({ theme }) => theme.color.defaultText};
 `;
 
 const Date = styled.div`
-  color: #bbb;
   font-size: 14px;
   text-decoration: none;
   line-height: 120%;
+  color: ${({ theme }) => theme.color.defaultGrayColor};
 `;
 
 const Horizontal = styled.div`
   width: 100%;
   height: 2px;
-  background-color: #eee;
+  background-color: ${({ theme }) => theme.color.defaultHorizontal};
 `;

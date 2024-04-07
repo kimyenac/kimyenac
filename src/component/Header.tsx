@@ -2,16 +2,11 @@
 
 import styled from "@emotion/styled";
 import Link from "next/link";
-import { useState } from "react";
 import { css } from "@emotion/react";
+import useThemeMode from "@/hook/useThemeMode";
 
 const Header = () => {
-  const [checked, setChecked] = useState(false);
-
-  // todo 테마 변경 로직 추가
-  const onChange = () => {
-    setChecked((prev) => !prev);
-  };
+  const { isDarkMode, changeThemeMode } = useThemeMode();
 
   return (
     <Wrap>
@@ -20,13 +15,15 @@ const Header = () => {
         <input
           id="toggle"
           type="checkbox"
-          checked={checked}
-          onClick={onChange}
+          checked={isDarkMode}
+          onClick={() => {
+            changeThemeMode(!isDarkMode);
+          }}
           hidden
         />
 
-        <ToggleSwitch checked={checked} htmlFor="toggle">
-          <ToggleButton checked={checked} />
+        <ToggleSwitch checked={isDarkMode} htmlFor="toggle">
+          <ToggleButton checked={isDarkMode} />
         </ToggleSwitch>
       </Container>
     </Wrap>
@@ -37,8 +34,8 @@ export default Header;
 
 const Wrap = styled.div`
   width: 100%;
-  background-color: #eee;
   z-index: 1;
+  background-color: ${({ theme }) => theme.color.defaultHorizontal};
 `;
 
 const Container = styled.div`
@@ -52,10 +49,10 @@ const Container = styled.div`
 `;
 
 const Name = styled(Link)`
-  color: #000;
   font-size: 16px;
   text-decoration: none;
   line-height: 120%;
+  color: ${({ theme }) => theme.color.defaultBlack};
 `;
 
 const ToggleSwitch = styled.label<{ checked: boolean }>`
@@ -64,16 +61,15 @@ const ToggleSwitch = styled.label<{ checked: boolean }>`
   display: block;
   position: relative;
   border-radius: 30px;
-  background-color: #fff;
   box-shadow: 0 0 16px 3px rgba(0 0 0 / 15%);
   cursor: pointer;
   transition: all 0.2s ease-in;
 
-  ${({ checked }) =>
-    checked &&
-    css`
-      background: #f03d3d;
-    `}
+  ${({ checked, theme }) => css`
+    background-color: ${checked
+      ? theme.color.rightActive
+      : theme.color.darkActive};
+  `}
 `;
 
 const ToggleButton = styled.span<{ checked: boolean }>`
@@ -84,13 +80,12 @@ const ToggleButton = styled.span<{ checked: boolean }>`
   left: 4px;
   transform: translateY(-50%);
   border-radius: 50%;
-  background: #f03d3d;
   transition: all 0.2s ease-in;
+  background-color: ${({ theme }) => theme.color.defaultWhite};
 
   ${({ checked }) =>
     checked &&
     css`
       left: calc(100% - 22px);
-      background: #fff;
     `}
 `;
