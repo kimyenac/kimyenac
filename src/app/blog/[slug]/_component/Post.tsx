@@ -37,12 +37,13 @@ const Post = ({ slug }: { slug: string }) => {
 export default Post;
 
 const Wrap = styled.div`
-  margin: 2.5rem auto;
+  margin: auto;
+  padding: 2.5rem 1rem;
   max-width: 800px;
-  padding: 0 1rem;
   display: flex;
   flex-direction: column;
   gap: 25px;
+  color: ${({ theme }) => theme.color.defaultText};
 `;
 
 const InfoWrap = styled.div`
@@ -56,7 +57,6 @@ const Category = styled.div`
   font-size: 14px;
   text-decoration: none;
   line-height: 120%;
-  color: ${({ theme }) => theme.color.defaultText};
 `;
 
 const Title = styled.div`
@@ -64,7 +64,6 @@ const Title = styled.div`
   text-decoration: none;
   line-height: 120%;
   font-weight: 700;
-  color: ${({ theme }) => theme.color.defaultText};
 `;
 
 const Date = styled.div`

@@ -24,6 +24,10 @@ const Header = () => {
 
         <ToggleSwitch checked={isDarkMode} htmlFor="toggle">
           <ToggleButton checked={isDarkMode} />
+          <ToggleIcon
+            icon={isDarkMode ? "/sun.png" : "/moon.png"}
+            checked={isDarkMode}
+          ></ToggleIcon>
         </ToggleSwitch>
       </Container>
     </Wrap>
@@ -35,7 +39,8 @@ export default Header;
 const Wrap = styled.div`
   width: 100%;
   z-index: 1;
-  background-color: ${({ theme }) => theme.color.defaultHorizontal};
+  border-bottom: ${({ theme }) => `1px solid ${theme.color.defaultHorizontal}`};
+  background-color: ${({ theme }) => theme.color.defaultBackground};
 `;
 
 const Container = styled.div`
@@ -49,10 +54,10 @@ const Container = styled.div`
 `;
 
 const Name = styled(Link)`
-  font-size: 16px;
+  font-size: 17px;
   text-decoration: none;
   line-height: 120%;
-  color: ${({ theme }) => theme.color.defaultBlack};
+  color: ${({ theme }) => theme.color.defaultText};
 `;
 
 const ToggleSwitch = styled.label<{ checked: boolean }>`
@@ -67,7 +72,7 @@ const ToggleSwitch = styled.label<{ checked: boolean }>`
 
   ${({ checked, theme }) => css`
     background-color: ${checked
-      ? theme.color.rightActive
+      ? theme.color.lightActive
       : theme.color.darkActive};
   `}
 `;
@@ -87,5 +92,32 @@ const ToggleButton = styled.span<{ checked: boolean }>`
     checked &&
     css`
       left: calc(100% - 22px);
+    `}
+`;
+
+const ToggleIcon = styled.i<{ checked: boolean; icon: string }>`
+  display: block;
+
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  left: 5px;
+  top: 2px;
+
+  //right: 4px;
+  //transform: translateY(-50%);
+  transition: all 0.2s ease-in;
+  background-repeat: no-repeat;
+  background-size: contain;
+
+  ${({ icon }) => css`
+    background-image: url(${icon});
+  `}
+
+  ${({ checked }) =>
+    !checked &&
+    css`
+      left: calc(100% - 25px);
+      top: 2px;
     `}
 `;

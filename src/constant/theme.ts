@@ -8,7 +8,7 @@ declare module "@emotion/react" {
       defaultGrayColor: string;
       defaultHorizontal: string;
       defaultWhite: string;
-      rightActive: string;
+      lightActive: string;
       darkActive: string;
       defaultBlack: string;
     };
@@ -17,26 +17,26 @@ declare module "@emotion/react" {
 
 export const lightTheme: Theme = {
   color: {
-    defaultText: "#000",
+    defaultText: "#23272c",
     defaultBackground: "#fff",
-    defaultGrayColor: "#bbb",
-    defaultHorizontal: "#eee",
+    defaultGrayColor: "#707070",
+    defaultHorizontal: "#c2c2c2",
     defaultWhite: "#fff",
-    defaultBlack: "#000",
-    rightActive: "#f03d3d",
-    darkActive: "#000",
+    defaultBlack: "#23272c",
+    lightActive: "#c2c2c2",
+    darkActive: "#23272c",
   },
 };
 
 export const darkTheme: Theme = {
   color: {
     defaultText: "#fff",
-    defaultBackground: "#000",
+    defaultBackground: "#23272c",
     defaultGrayColor: "#bbb",
     defaultHorizontal: "#eee",
     defaultWhite: "#fff",
-    rightActive: "#f03d3d",
-    darkActive: "#000",
-    defaultBlack: "#000",
+    lightActive: "#c2c2c2",
+    darkActive: "#23272c",
+    defaultBlack: "#23272c",
   },
 };

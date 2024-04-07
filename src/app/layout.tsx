@@ -1,5 +1,6 @@
 import Header from "@/component/Header";
 import Providers from "@/component/Providers";
+import BodyContainer from "@/component/BodyContainer";
 
 export default function RootLayout({
   children,
@@ -11,7 +12,7 @@ export default function RootLayout({
       <body style={{ margin: "0" }}>
         <Providers>
           <Header />
-          {children}
+          <BodyContainer>{children}</BodyContainer>
         </Providers>
       </body>
     </html>
