@@ -1,3 +1,4 @@
+import "./global.css";
 import Header from "@/component/Header";
 import Providers from "@/component/Providers";
 import BodyContainer from "@/component/BodyContainer";

@@ -1,0 +1,14 @@
+a {
+  color: unset;
+}
+
+pre {
+  background-color: #eee;
+  color: #282c34;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+hr {
+  width: 100%;
+}

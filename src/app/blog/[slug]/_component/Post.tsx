@@ -29,7 +29,9 @@ const Post = ({ slug }: { slug: string }) => {
         <Date>{postDate}</Date>
       </InfoWrap>
       <Horizontal />
-      <MDXContent components={mdxComponents} />
+      <div>
+        <MDXContent components={mdxComponents} />
+      </div>
     </Wrap>
   );
 };
@@ -38,12 +40,14 @@ export default Post;
 
 const Wrap = styled.div`
   margin: auto;
-  padding: 2.5rem 1rem;
+  padding: 5rem 1rem;
   max-width: 800px;
   display: flex;
   flex-direction: column;
   gap: 25px;
   color: ${({ theme }) => theme.color.defaultText};
+  font-size: 14px;
+  line-height: 140%;
 `;
 
 const InfoWrap = styled.div`
