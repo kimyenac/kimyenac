@@ -1,0 +1,65 @@
+---
+slug: using-intl-to-format-number
+title: 숫자를 포맷팅 할 수 있는 Intl 사용법 (통화 기호 적용) with JS
+date: 2023-08-26
+description: JavaScript로 Intl을 사용해서 숫자를 포맷팅하는 방법을 공유합니다.
+category: front-end
+---
+
+오늘은 자바스크립트에서 Intl을 사용하여 숫자를 포맷팅하는 방법에 대해 정리해보겠습니다.
+<br />
+
+---
+
+<br /> <br />
+
+# Intl API
+<br /> 각 국가별 날짜/시간 표기법이 다르기 때문에 국제화를 지원하는 서비스에서는 국가/언어 별로 날짜와 시간을 포맷팅 할 수 있게 도와주는 기능이 필요한데 이를 도와주는 게 Intl API 입니다. <br /> <br />
+또한 다양하게 날짜와 시간을 포맷팅 할 수 있는 기능을 제공하고 있어서 꼭 국제화를 지원하는 서비스가 아니여도 날짜와 시간을 포맷팅 할 때 자주 쓰이는 API 입니다. <br /> <br />
+자바스크립트에서는 따로 설치할 필요 없이 Intl API를 기본적으로 제공하고 있습니다. Intl API는 대부분의 모던 브라우저에서 지원되고 있으며, Node.js 에서도 사용이 가능하기 때문에 프론트엔드 뿐 아니라 백엔드에서 유용하게 사용할 수 있습니다. <br /> <br />
+<b>Intl 로 날짜/시간을 포맷팅하는 방법</b>은 [여기 링크](/blog/using-intl-to-format-dates-and-times)를 참고해주세요!
+
+<br /> <br />
+
+# Intl.NumberFormat 기본 사용 방법
+```javascript
+new Intl.DateTimeFormat(locale).format(number)
+```
+<br /> 여기서 locale 은 ko-KR, en-US 등 지원할 로케일(혹은 언어)을 넣어주시면 됩니다. (locale 값은 옵셔널이며, locale 값을 넣지 않을 경우 기본 로케일과 기본 시간대로 브라우저 언어를 지원합니다.) number 는 포맷팅 할 숫자를 넣어주시면 됩니다.
+
+```javascript
+// 사용 예제 코드
+
+const number = 12345678;
+new Intl.NumberFormat().format(number); // 12,345,678
+new Intl.NumberFormat('ko-KR').format(number); // 12,345,678
+```
+<br /> <br />
+
+## 통화 기호 포맷팅하기
+Intl.NumberFormat 에서는 통화 값을 넣을 경우 그에 맞는 기호와 함께 숫자를 포맷팅 해주는 기능이 있습니다.
+<br />
+### 기본 사용 방법
+```javascript
+const number = 12345678;
+new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(number); // ₩12,345,678
+new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' }).format(number); // ￥12,345,678
+```
+원하는 스타일대로 포맷하기 위해 NumberFormat 에 options 를 넣어주면 됩니다. options 도 locale 과 동일하게 옵셔널 값입니다. 만약 locale 을 넣지 않고 options 로만 포맷팅하고 싶은 경우 locale 자리에 undefined 를 넣으시면 됩니다. (마찬가지로 locale 값을 넣지 않을 경우 기본 로케일로 브라우저 언어를 사용하여 지원합니다.)
+
+```javascript
+// 사용 예제 코드
+
+const number = 12345678;
+new Intl.NumberFormat(undefined, { style: 'currency', currency: 'KRW' }).format(number); // ₩12,345,678
+```
+자세한 건 [Intl 공식 문서 페이지 > NumberFormat options](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat/NumberFormat) 에 옵션별 포맷팅 방식과 그에 대한 설명이 자세히 다뤄져 있으니 참고해주세요.
+<br />
+
+---
+
+<br /> <br />
+
+# Reference
+
+[https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Intl/NumberFormat)
