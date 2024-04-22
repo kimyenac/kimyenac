@@ -1,0 +1,148 @@
+---
+slug: using-react-i18next-with-multilingual-support
+title: 다국어를 지원하는 react-i18next 사용하기 (글로벌) with React
+date: 2023-08-13
+description: react-i18next를 사용한 다국어 처리 방법을 공유합니다.
+category: front-end
+---
+
+현재 회사에서 올 2분기 동안 글로벌 스쿼드에 프론트엔드 개발자로 소속되어 수많은 프로젝트를 진행했는데요, <br />
+코리아와 다르게 글로벌 버전으로 새롭게 만들어진 페이지, 영역들도 있지만. 기존 페이지를 다국어 지원하도록 작업하는 것도 많았습니다.<br />
+이때 다국어 지원을 위해 사용한 라이브러리 react-i18next 에 대해서 사용법을 정리해보려고 합니다! 🤓
+<br />
+
+---
+
+<br /> <br />
+
+# 1. 패키지 설치
+<br /> 아래 명령어를 통해 먼저 패키지 설치를 진행합니다. (react-i18next, i18next)
+
+```javascript
+npm i react-i18next i18next
+```
+<br /> <br />
+
+# 2. i18n 세팅하기
+<br/> src 폴더 안에 i18n 디렉터리를 생성해서 index.ts (혹은 index.js) 파일을 생성합니다.
+<br/> 여기서 디렉터리 이름과 파일 이름은 취향껏 변경해도 됩니다. (i18n 관련 파일을 저장할 디렉터리 & 세팅 파일임.) <br/>
+<br/> 여기서 리소스를 정의하고 i18n 을 세팅해줍니다.
+<br/> 번역 데이터는 아래 예시 코드처럼 locales 라는 디렉터리에서 정의해서 import 해도 되고, i18n 세팅 파일 내에서 직접 정의해도 됩니다.
+<br/> 여러 번역 파일을 바운딩할 수 있는데, react-i18next 에서 키에 액세스하는 걸 네임스페이스 줄여서 ns 라고 합니다. 기본적으로 사용할 defaultNS 와 ns 리스트도 세팅할 수 있습니다. (안 해도 되지만, 번역파일이 여러 개라면 세팅 파일에서 ns 와 defaultNS 는 선언하는 걸 추천합니다.) <br/>
+<br/> 아래 예시 코드는 기본적인 세팅만 한 거고, 추가적인 세팅은 필요한 것을 찾아 커스텀하면 됩니다.
+<br/> 참고 세팅 : [https://react.i18next.com/latest/i18next-instance](https://react.i18next.com/latest/i18next-instance)
+
+```javascript
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+import translationJA from "./locales/ja/translation.json";
+import translationEN from "./locales/en/translation.json";
+import translationKO from "./locales/ko/translation.json";
+
+const resources = {
+  ja: {
+    translation: translationJA
+  },
+  en: {
+    translation: translationEN
+  },
+  ko: {
+    translation: translationKO
+  }
+};
+
+i18n
+  .use(initReactI18next)
+  .init({
+    resources,
+    lng: "en", // 기본 설정 언어
+    fallbackLng: "en", // 번역 파일에서 데이터를 찾을 수 없는 경우 fallbackLng 언어의 데이터를 보여줌.
+    ns: ["translation"],
+    defaultNS: "translation",
+    interpolation: {
+      escapeValue: false
+    }
+  });
+
+export default i18n;
+```
+<br /> <br />
+
+# 3. 번들링을 위해 최상단 App 파일에서 2번에서 세팅한 i18n 을 import
+
+```javascript
+import "./i18n";
+
+const root = createRoot(document.getElementById('root'));
+root.render(
+<App />
+);
+```
+
+<br /> 여러 i18next 인스턴스를 지원해야 하는 경우 App을 I18nextProvider 로 감싸야 합니다.
+
+```javascript
+import { I18nextProvider } from 'react-i18next';
+import i18n from './i18n';
+
+const root = createRoot(document.getElementById('root'));
+root.render(
+  <I18nextProvider i18n={i18n} defaultNS={'translation'}>
+    <App />
+  </I18nextProvider>
+);
+```
+<br /> <br />
+
+# 4. 다국어 지원 코드 작성하기
+<br /> 기본적으로 react-i18next 에서 사용하는 useTranslation 훅을 사용합니다. 번역 파일이 많은 경우엔 useTranslation 파라미터로 ns (번역 리소스명) 을 넘겨줍니다. (안 넣을 경우 세팅에서 설정한 defaultNS 의 값을 사용함.)
+
+```javascript
+import { useTranslation } from 'react-i18next';
+
+const Test = () => {
+  const { t, i18n } = useTranslation('translation'); // 혹은 const [t, i18n] = useTranslation('translation');
+
+  return <p>{t('번역 키')}</p>
+}
+```
+
+<br /> 만약 번역 값에 태그가 들어 있다면, [Trans](https://react.i18next.com/legacy-v9/trans-component) 컴포넌트를 사용합니다. 마찬가지로 번역 파일이 많은 경우엔 useTranslation 파라미터로 ns (translation 명) 을 넘겨줍니다. (안 넣을 경우 세팅에서 설정한 defaultNS 의 값을 사용함.) [버전이 업데이트 되면서 일부 컴포넌트는 props 로 넘겨주지 않아도 적용이 됩니다.](https://react.i18next.com/latest/trans-component#usage-with-simple-html-elements-like-less-than-br-greater-than-and-others-v10.4.0)
+
+```javascript
+import { Trans } from 'react-i18next';
+
+const Test = () => {
+  return <Trans i18nKey="번역 키" ns="translation" components={[<div>hello</div>]} />
+}
+```
+
+<br /> 번역 값에 변수를 넘겨야 하는 경우엔 useTranslation 의 경우 ```t('번역 키', { 키에_들어_있는_변수명: 변수 })```',
+<br /> Trans 컴포넌트의 경우 ```<Trans i18nKey="namespace" values={{ 키에_들어_있는_변수명: 변수 }} />``` 로 사용 가능합니다.
+
+```javascript
+import { Trans } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
+
+// useTranslation Hook
+const Test1 = () => {
+  const count = useState<number>(0);
+  const { t, i18n } = useTranslation('translation');
+
+  return <p>{t('번역 키', { 번역_값에_넣어둔_변수명: count})}</p>
+}
+
+// Trans Component
+const Test2 = () => {
+  return <Trans i18nKey="번역 키" ns="translation" components={[<div>hello</div>]} />
+}
+```
+
+<br /> <br />
+---
+
+<br /> <br />
+
+# Reference
+
+[https://react.i18next.com/](https://react.i18next.com/)
