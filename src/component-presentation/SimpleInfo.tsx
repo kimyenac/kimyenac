@@ -2,13 +2,13 @@
 
 import styled from "@emotion/styled";
 
-const SimpleInfo = () => {
+const SimpleInfo = ({ description }: { description: string }) => {
   return (
     <Wrap>
       <Profile src="/profile.png" />
       <InfoWrap>
         <Name>kimyenac</Name>
-        <Description>예나 지금이나 개발로그</Description>
+        <Description>{description}</Description>
       </InfoWrap>
     </Wrap>
   );
