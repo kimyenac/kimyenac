@@ -11,24 +11,27 @@ const Header = () => {
   return (
     <Wrap>
       <Container>
-        <Name href="/">kimyenac</Name>
-        <input
-          id="toggle"
-          type="checkbox"
-          checked={isDarkMode}
-          onClick={() => {
-            changeThemeMode(!isDarkMode);
-          }}
-          hidden
-        />
-
-        <ToggleSwitch checked={isDarkMode} htmlFor="toggle">
-          <ToggleButton checked={isDarkMode} />
-          <ToggleIcon
-            icon={isDarkMode ? "/sun.png" : "/moon.png"}
+        <Anchor href="/">kimyenac</Anchor>
+        <RightWrap>
+          <Anchor href="/blog">blog</Anchor>
+          <input
+            id="toggle"
+            type="checkbox"
             checked={isDarkMode}
-          ></ToggleIcon>
-        </ToggleSwitch>
+            onClick={() => {
+              changeThemeMode(!isDarkMode);
+            }}
+            hidden
+          />
+
+          <ToggleSwitch checked={isDarkMode} htmlFor="toggle">
+            <ToggleButton checked={isDarkMode} />
+            <ToggleIcon
+              icon={isDarkMode ? "/sun.png" : "/moon.png"}
+              checked={isDarkMode}
+            ></ToggleIcon>
+          </ToggleSwitch>
+        </RightWrap>
       </Container>
     </Wrap>
   );
@@ -53,11 +56,17 @@ const Container = styled.div`
   gap: 16px;
 `;
 
-const Name = styled(Link)`
+const Anchor = styled(Link)`
   font-size: 17px;
   text-decoration: none;
   line-height: 120%;
   color: ${({ theme }) => theme.color.defaultText};
+`;
+
+const RightWrap = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: center;
 `;
 
 const ToggleSwitch = styled.label<{ checked: boolean }>`
