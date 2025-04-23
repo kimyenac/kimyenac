@@ -2,6 +2,7 @@ import "./global.css";
 import Header from "@/component/Header";
 import Providers from "@/component/Providers";
 import BodyContainer from "@/component/BodyContainer";
+import Head from "next/head";
 
 export default function RootLayout({
   children,
@@ -10,6 +11,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <Head>
+        <meta name="robots" content="noindex, nofollow" />
+      </Head>
       <body style={{ margin: "0" }}>
         <Providers>
           <Header />
