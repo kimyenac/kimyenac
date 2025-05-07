@@ -15,9 +15,7 @@ const SideProject = () => {
           <DescriptionLi>
             프로젝트 매니징, 디자인, 프론트엔드 개발 담당
           </DescriptionLi>
-          <DescriptionLi>
-            nextJS 사용으로 SSR 활용 & 서비스 운영 경험
-          </DescriptionLi>
+          <DescriptionLi>nextJS 사용 & 서비스 운영 경험</DescriptionLi>
           <DescriptionLi>next13, emotion, recoil, Github</DescriptionLi>
         </DescriptionUl>
       </Container>
