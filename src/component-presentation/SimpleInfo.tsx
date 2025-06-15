@@ -5,7 +5,7 @@ import styled from "@emotion/styled";
 const SimpleInfo = ({ description }: { description: string }) => {
   return (
     <Wrap>
-      <Profile src="/profile.png" />
+      <Profile src="/profile.jpeg" />
       <InfoWrap>
         <Name>kimyenac</Name>
         <Description>{description}</Description>
@@ -28,6 +28,7 @@ const Profile = styled.img`
   width: 100px;
   height: 100px;
   border-radius: 25% 0 25% 0;
+  object-fit: cover;
 `;
 
 const InfoWrap = styled.div`
