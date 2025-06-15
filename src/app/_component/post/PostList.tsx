@@ -4,8 +4,8 @@ import styled from "@emotion/styled";
 import { getAllPosts } from "@/service/posts";
 import PostItem from "./PostItem";
 
-const PostList = () => {
-  const posts = getAllPosts("review");
+const PostList = ({ tag }: { tag: string }) => {
+  const posts = getAllPosts(tag);
 
   return (
     <Wrap>
