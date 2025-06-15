@@ -4,7 +4,7 @@ import { compareDesc } from "date-fns";
 export const getAllPosts = (tag?: string): Post[] => {
   return allPosts
     .sort((a, b) => compareDesc(new Date(a.date), new Date(b.date)))
-    .filter((post) => (tag ? post.tag === tag : true));
+    .filter((post) => (tag ? post._raw.sourceFileDir === tag : true));
 };
 
 export const getPostDetail = ({
@@ -14,8 +14,6 @@ export const getPostDetail = ({
   slug: string;
   tag: string;
 }): Post | undefined => {
-  const sorted = getAllPosts();
-  return sorted.find(
-    (post) => post.tag === tag && post._raw.flattenedPath === slug,
-  );
+  const sorted = getAllPosts(tag);
+  return sorted.find((post) => post._raw.sourceFileName.split(".")[0] === slug);
 };

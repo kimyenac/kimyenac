@@ -7,7 +7,7 @@ const PostItem = ({ post }: { post: Post }) => {
   const postDate = format(post.date, "yyyy-MM-dd");
 
   return (
-    <Wrap href={`/tech/tech/${post.slug}`}>
+    <Wrap href={`/tech/${post.slug}`}>
       <Title>{post.title}</Title>
       <Description>{post.description}</Description>
       <Date>{`${post.category} · ${postDate}`}</Date>
