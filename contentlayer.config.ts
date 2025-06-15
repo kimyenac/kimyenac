@@ -26,11 +26,15 @@ export const Post = defineDocumentType(() => ({
       type: "string",
       required: true,
     },
+    tag: {
+      type: "string",
+      required: true,
+    },
   },
   computedFields: {
     url: {
       type: "string",
-      resolve: (post) => `posts/${post._raw.flattenedPath}`,
+      resolve: (post) => `posts/${post.tag}/${post._raw.flattenedPath}`,
     },
   },
 }));

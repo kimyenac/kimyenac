@@ -13,7 +13,7 @@ const Header = () => {
       <Container>
         <Anchor href="/">kimyenac</Anchor>
         <RightWrap>
-          <Anchor href="/blog">blog</Anchor>
+          <Anchor href="/tech">tech</Anchor>
           <input
             id="toggle"
             type="checkbox"
