@@ -2,12 +2,13 @@ import styled from "@emotion/styled";
 import { Post } from "contentlayer/generated";
 import { format } from "date-fns";
 import Link from "next/link";
+import { Tag } from "@/type";
 
-const PostItem = ({ post }: { post: Post }) => {
+const PostItem = ({ post, tag }: { post: Post; tag: Tag }) => {
   const postDate = format(post.date, "yyyy-MM-dd");
 
   return (
-    <Wrap href={`/review/${post.slug}`}>
+    <Wrap href={`/${tag}/${post.slug}`}>
       <Title>{post.title}</Title>
       <Description>{post.description}</Description>
       <Date>{`${post.category} · ${postDate}`}</Date>

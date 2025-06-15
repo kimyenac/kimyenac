@@ -1,1 +1,2 @@
-export type Tag = "review" | "tech";
+export const techCategoryList = ["react", "javascript"];
+export const reviewCategoryList = ["book"];

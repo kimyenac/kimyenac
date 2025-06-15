@@ -6,3 +6,5 @@ export enum ThemeMode {
 export const StorageKey = {
   THEME_MODE: "DARK",
 };
+
+export type Tag = "review" | "tech";

@@ -1,7 +1,6 @@
 "use client";
 
 import styled from "@emotion/styled";
-import Category from "@/app/_component/Category";
 import React from "react";
 
 type Props = {
@@ -15,7 +14,7 @@ type Props = {
 const Container = ({ category, title, description, children }: Props) => {
   return (
     <Wrap>
-      <Category title={category} />
+      <Category>{title}</Category>;
       <MainWrap>
         <Title>{title}</Title>
         <Description>{description}</Description>
@@ -34,6 +33,13 @@ const Wrap = styled.div`
   flex-direction: column;
   gap: 16px;
   border-top: ${({ theme }) => `1.5px solid ${theme.color.defaultGrayColor}`};
+`;
+
+const Category = styled.div`
+  font-size: 24px;
+  font-weight: 700;
+  color: ${({ theme }) => theme.color.defaultText};
+  line-height: 120%;
 `;
 
 const MainWrap = styled.div`

@@ -3,16 +3,31 @@
 import styled from "@emotion/styled";
 import { getAllPosts } from "@/service/posts";
 import PostItem from "./PostItem";
-import { Tag } from "@/constant";
+import { Tag } from "@/type";
+import CategoryList from "./CategoryList";
 
-const PostList = ({ tag }: { tag: Tag }) => {
-  const posts = getAllPosts(tag);
+const PostList = ({
+  tag,
+  categoryList,
+  setSelectedCategory,
+  category,
+}: {
+  tag: Tag;
+  categoryList: string[];
+  setSelectedCategory: (category: string) => void;
+  category?: string;
+}) => {
+  const posts = getAllPosts({ tag, category });
 
   return (
     <Wrap>
+      <CategoryList
+        categoryList={categoryList}
+        setSelectedCategory={setSelectedCategory}
+      />
       <Container>
         {posts.map((item) => (
-          <PostItem key={item._id} post={item} />
+          <PostItem key={item._id} post={item} tag={tag} />
         ))}
       </Container>
     </Wrap>
