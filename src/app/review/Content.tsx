@@ -1,15 +1,12 @@
 "use client";
 
-import { useRecoilState } from "recoil";
-import { selectedReviewCategoryStore } from "@/store/categoryStore";
 import PostList from "@/app/_component/post/PostList";
 import { reviewCategoryList } from "@/constant";
-import React from "react";
+import React, { useState } from "react";
 
 const Content = () => {
-  const [selectedReviewCategory, setSelectedReviewCategory] = useRecoilState(
-    selectedReviewCategoryStore,
-  );
+  const [selectedReviewCategory, setSelectedReviewCategory] =
+    useState<string>();
 
   return (
     <PostList
