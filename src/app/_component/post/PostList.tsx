@@ -3,8 +3,9 @@
 import styled from "@emotion/styled";
 import { getAllPosts } from "@/service/posts";
 import PostItem from "./PostItem";
+import { Tag } from "@/constant";
 
-const PostList = ({ tag }: { tag: string }) => {
+const PostList = ({ tag }: { tag: Tag }) => {
   const posts = getAllPosts(tag);
 
   return (

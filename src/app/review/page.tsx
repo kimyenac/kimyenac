@@ -12,7 +12,7 @@ const Page = () => {
   return (
     <>
       <SimpleInfo description="개발 외 감상들을 기록하다" />
-      <PostList tag="reviw" />
+      <PostList tag="review" />
     </>
   );
 };
