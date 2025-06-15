@@ -14,6 +14,7 @@ const Header = () => {
         <Anchor href="/">kimyenac</Anchor>
         <RightWrap>
           <Anchor href="/tech">tech</Anchor>
+          <Anchor href="/review">review</Anchor>
           <input
             id="toggle"
             type="checkbox"
