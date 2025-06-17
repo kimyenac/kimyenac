@@ -22,6 +22,7 @@ const PostList = ({
   return (
     <Wrap>
       <CategoryList
+        category={category}
         categoryList={categoryList}
         setSelectedCategory={setSelectedCategory}
       />

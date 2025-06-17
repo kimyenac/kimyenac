@@ -3,14 +3,20 @@ import styled from "@emotion/styled";
 const CategoryList = ({
   setSelectedCategory,
   categoryList,
+  category,
 }: {
   categoryList: string[];
+  category?: string;
   setSelectedCategory: (category: string) => void;
 }) => {
   return (
     <Wrap>
       {categoryList.map((item) => (
-        <Chip key={item} onClick={() => setSelectedCategory(item)}>
+        <Chip
+          key={item}
+          isSelected={category === item}
+          onClick={() => setSelectedCategory(item)}
+        >
           {item}
         </Chip>
       ))}
@@ -26,13 +32,16 @@ const Wrap = styled.div`
   align-items: center;
 `;
 
-const Chip = styled.button`
+const Chip = styled.button<{ isSelected: boolean }>`
   padding: 6px 10px;
   font-size: 12px;
-  color: ${({ theme }) => theme.color.defaultText};
   line-height: 120%;
   border: ${({ theme }) => `1px solid ${theme.color.defaultText}`};
   border-radius: 12px;
-  background-color: ${({ theme }) => theme.color.defaultBackground};
   cursor: pointer;
+
+  color: ${({ theme, isSelected }) =>
+    isSelected ? theme.color.defaultBackground : theme.color.defaultText};
+  background-color: ${({ theme, isSelected }) =>
+    isSelected ? theme.color.defaultText : theme.color.defaultBackground};
 `;
