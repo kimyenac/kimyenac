@@ -1,0 +1,166 @@
+---
+slug: read-and-summarize-the-deep-dive-into-react-document
+title: 《React 톺아보기》 문서 정리
+date: 2024-7-20
+description: React 톺아보기 문서를 읽고 정리한 내용을 공유합니다.
+category: react
+tag: tech
+---
+
+# 📍Description
+
+회사 프론트엔드 동료들과 함께 React 톺아보기 문서를 읽으며 공부한 내용을 정리합니다.
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# ✏️ Intro & Hooks (2-3장) 일부 정리
+
+<br />
+
+## 훅 구현체 찾아가기
+- 코어는 다른 패키지의 기능을 개발자에게 제공해 줄 때 의존성을 자기가 만들지 않고 외부에서 주입 받음. 더 나아가 리액트는 외부에서 의존성을 주입할 때 코어에 직접 주입하지 않고, 중간자를 하나 더 두게 되는데 코어에서는 ReactSharedInternals.js가 이에 해당하고 리액트 프로젝트 전체로 보면 shared라는 패키지가 이 역할을 함
+<br /> <br />
+
+## 훅은 어떻게 생성되는가?
+- 훅을 이용하여 컴포넌트 상태를 변경하고자 할 때 업데이트 정보를 담고 있는 update 객체가 생성되는데. 이 객체는 훅의 queue에 저장됨. 한 번의 컴포넌트 호출에서 단일 훅의 setState()가 여러 번 호출되었다면 매 호출 생성된 update 객체는 이 queue에 쌓이게 되는 것. 그 후 컴포넌트가 리-렌더링 될 때 queue에 저장되어 있던 update을 차례대로 실행해 최종적으로 적용될 state를 도출하게 됨
+<br /> <br />
+
+## 훅은 어떻게 상태를 변경하고 컴포넌트를 리-렌더링 시키는가?
+- 코어는 다른 패키지의 기능을 개발자에게 제공해 줄 때 의존성을 자기가 만들지 않고 외부에서 주입 받음. 더 나아가 리액트는 외부에서 의존성을 주입할 때 코어에 직접 주입하지 않고, 중간자를 하나 더 두게 되는데 코어에서는 ReactSharedInternals.js가 이에 해당하고 리액트 프로젝트 전체로 보면 shared라는 패키지가 이 역할을 함
+<br /> <br />
+
+## 상태가 변경되어 리-렌더링될 때 변경된 상태 값은 어떻게 가지고 오는 것일까?
+- update 소비 로직 순서
+    - 적용할 update 리스트의 head를 가지고 온다.
+        - 훅의 baseUpdate 또는 queue의 last.next
+        - Circular Linked List 라면 더는 head를 물고 있을 필요가 없으므로 연결을 끊어준다.
+    - update 리스트의 head부터 tail까지 차례로 리듀서에 action을 던져 결괏값을 취한다.
+    - update를 모두 소비했다면 최종 상태값을 저장한다.
+<br /> <br />
+
+## 번외) expirationTime 을 구하는 방법 참고
+[레퍼런스](https://github.com/facebook/react/blob/v16.12.0/packages/react-reconciler/src/ReactFiberWorkLoop.js#L310)
+<br /> <br />
+
+---
+<br /> <br />
+
+# ✏️ Scheduler (4장) 일부 정리
+
+<br />
+
+## 훅 구현체 찾아가기
+- <b>reconciler</b>는 VDOM 재조정 작업 전에 설정해줘야 하는 부분들을 처리하며 <b>scheduler</b>는 스케줄링 된 <b>Task</b>에 우선순위 반영과 실행하기 적절한 때를 판단하고 작업의 실행과 중단을 담당합니다
+<br /> <br />
+
+## scheduleWork
+- [expirationTime 새기기](https://goidle.github.io/react/in-depth-react-scheduler_1/#2---1-expirationtime-%EC%83%88%EA%B8%B0%EA%B8%B0)
+<br /> <br />
+
+## flushSyncCallbackQueueImpl
+- runWithPriority()는 <b>scheduler</b>에게 콜백 함수의 우선순위를 알려주고 실행을 요청하는 함수입니다. 해당 우선순위는 shceduler의 컨텍스트 변수인 currentPriorityLevel에 저장됨
+- <b>Work</b>와 관련된 작업의 실행과 우선순위를 모두 <b>scheduler</b>가 관리하게 되면서 <b>reconciler</b>와 <b>scheduler</b> 사이에 서로 혼재될 수 있는 부분을 확실히 나누게 되었습니다. 이제 <b>reconciler</b>는 현재 진행되는 <b>Work</b>와 관련된 추가 작업이 필요할 때 <b>scheduler</b>의 컨텍스트 우선순위만 참고하면 됩니다. <b>Work</b>는 스케줄링된 순서대로 실행되는 것이 아니고 언제든지 중지되고 재실행 될 수 있기 때문에 재조정 작업만 할 줄 아는 <b>reconciler</b>는 더욱이 이 작업들의 우선순위를 가지고 있을 수 없음.
+
+## workLoop
+- 의견) 보면서 host_config 의 비동기 구현 로직도 궁금했는데 다음장에서 다룬다고 함 (다음 스터디 내 공부 범위로 포함 안 되면 따로 챙겨봐야지)
+<br /> <br />
+
+## performWorkUntilDeadline
+- yieldInterval : 스케줄러는 사용자 이벤트와 같이 메인 스레드에 다른 작업이 있는 경우 주기적으로 양보합니다. 기본적으로 프레임당 여러 번 산출합니다. 대부분의 작업은 프레임 정렬이 필요하지 않으므로 프레임 경계에 정렬을 시도하지 않으며, 프레임 정렬이 필요한 작업의 경우 requestAnimationFrame을 사용합니다.
+- deadline : vsync 주기의 어느 단계에 있든 상관없이 yieldInterval 초 이후의 수율입니다. 즉, 메시지 이벤트가 시작될 때 항상 시간이 남아있음을 의미합니다.
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# ✏️ Reconciler (5장) 일부 정리
+
+<br />
+
+<img src="/tech-resource/render_phase_flow.png" alt="render_phase_flow" style={{height: '300px'}} />
+
+## Fiber
+- JSX 문법으로 작성된 컴포넌트는 바벨을 통해 React.createElement()로 치환
+- createElement 인자
+    - type
+        - 호스트 컴포넌트 : 태그 이름
+        - 커스텀 컴포넌트 : 작성한 함수
+        - 스태틱 컴포넌트 : 미리 정의된 심볼 또는 memo, lazy 와 같이 함수 호출을 통해 만들어진 React Element
+    - config : props 를 담고 있는 객체
+    - children : 자식 컴포넌트
+- React element 의 종류는 type 심볼로 판단 / fiber는 tag를 통해 판단
+<br /> <br />
+
+## Fiber Root Node
+- stateNode : 호스트 컴포넌트의 stateNode 는 돔에 삽입된 HTML element 를 가리키는 반면, 개발자가 작성한 커스텀 컴포넌트의 stateNode는 Null. 돔에 마운트되는 게 아니기 때문이며, 특별히 host root 만 돔에 마운트 되지 않아도 root 를 가리키도록 되어 있음.
+<br /> <br />
+
+## 트리 구조
+- VDOM 을 DOM 에 적용할 때는 HTML Element 에 대응하는 호스트 컴포넌트만 마운트 됨. 개발자가 작성한 커스텀 컴포넌트는 React Element 를 반환하는 상태를 가진 콜백 함수 그 이상 그 이하도 아님.
+<br /> <br />
+
+## Sync Work, Async Work
+- sync work 가 실행되는 경우
+    - concurrent mode 에서 sync 로 변경된 경우
+    - 처음부터 sync 인 경우
+- workInProgress
+    - prepareFreshStack() 이나 async work 에서 sync work 로 넘어오면서 잡아두게 됨. null 이라면 work 를 진행할 대상이 없다는 의미이므로 Render phase 나 commit phase 에 진입하지 않음.
+- [경로 최적화 다시 보기](https://goidle.github.io/react/in-depth-react-reconciler_2/#-%EA%B2%BD%EB%A1%9C-%EC%B5%9C%EC%A0%81%ED%99%94)
+<br /> <br />
+
+## Render phase
+- stateNode : 호스트 컴포넌트의 stateNode 는 돔에 삽입된 HTML element 를 가리키는 반면, 개발자가 작성한 커스텀 컴포넌트의 stateNode는 Null. 돔에 마운트되는 게 아니기 때문이며, 특별히 host root 만 돔에 마운트 되지 않아도 root 를 가리키도록 되어 있음.
+<br /> <br />
+
+## 재조정과 Key
+- React 재조정 공식 문서 : [재조정 (Reconciliation) – React](https://ko.legacy.reactjs.org/docs/reconciliation.html)
+- key의 중요성을 이해하기 위한 문서 : [리스트와 Key – React](https://ko.legacy.reactjs.org/docs/lists-and-keys.html)
+    - 배열의 인덱스를 key로 사용했을 경우. 요소의 위치가 변경되었을 때 배열을 재생성하는가?
+    - [같은 궁금증에 대한 답변](https://github.com/goidle/goidle.github.io/issues/19#issuecomment-2084180376)
+<br /> <br />
+
+## Work 마무리
+- 재조정 작업으로 얻은 fiber를 Commit phase 에서 사용할 수 있도록 준비하는 것. fiber를 DOM에 올리기 위한 사전 작업으로 생각할 수 있으며 fiber와 대응하는 HTML Element를 생성하거나 수정, 삭제, 이벤트 핸들러 등 Work를 통해 발생한 모든 결과물을 여기서 처리.
+- Work 마무리 순서는 후위 순회
+- props 가 element 에 적용되는 시점은 commit phase
+<br /> <br />
+
+## Commit phase
+- finishSyncRender() : DOM 에 변형을 가할 때
+    - useEffect 를 제외하고 모두 동기적으로 처리
+    - DOM 변경과 화면 렌더링 사이 또는 렌더링 이후 개발자가 개입할 수 있도록 해줌.
+- commitBeforeMutationEffects() : effect 를 소비하는 방식
+    - firstEffect부터 lastEffect까지 순회하며 현재 시점에 처리해야되는 Effect를 tag를 이용하여 필터링한 후 소비하는 방식
+
+<br />
+<img src="/tech-resource/react_hook_flow_diagram.png" alt="react_hook_flow_diagram" style={{height: '300px'}} />
+
+<br /> <br />
+
+## 리액트의 저장소
+- 컴포넌트의 side-effect를 담고 있는 fiber의 firstEffect, nextEffect, lastEffect
+- 함수형 컴포넌트에서 사용되는 훅들의 리스트를 담고 있는 fiber의 memoizedState
+- 함수형 컴포넌트의 라이프 사이클 Effect를 담고 있는 fiber의 updateQueue
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# Reference
+
+[React 톺아보기 - 02. Intro](https://goidle.github.io/react/in-depth-react-intro/) <br />
+[React 톺아보기 - 03. Hooks_1](https://goidle.github.io/react/in-depth-react-hooks_1/) <br />
+[React 톺아보기 - 03. Hooks_2](https://goidle.github.io/react/in-depth-react-hooks_2/) <br />
+[React 톺아보기 - 04. Scheduler_1](https://goidle.github.io/react/in-depth-react-scheduler_1/) <br />
+[React 톺아보기 - 04. Scheduler_2](https://goidle.github.io/react/in-depth-react-scheduler_2/) <br />
+[React 톺아보기 - 04. Reconciler_1](https://goidle.github.io/react/in-depth-react-reconciler_1/) <br />
+[React 톺아보기 - 04. Reconciler_2](https://goidle.github.io/react/in-depth-react-reconciler_2/) <br />
+[React 톺아보기 - 04. Reconciler_3](https://goidle.github.io/react/in-depth-react-reconciler_3/) <br />
+[React 톺아보기 - 04. Reconciler_4](https://goidle.github.io/react/in-depth-react-reconciler_4/) <br />
+[React 톺아보기 - 04. Reconciler_5](https://goidle.github.io/react/in-depth-react-reconciler_5/)
