@@ -1,0 +1,290 @@
+---
+slug: learning-contents-of-java-basics-by-kimyounghan-lecture
+title: 《김영한의 자바 입문편》 강의 리뷰/정리
+date: 2025-07-17
+description: 김영한의 자바 입문편 강의를 듣고 공부한 내용을 정리합니다.
+category: java
+tag: tech
+---
+
+<br />
+
+# SECTION 1~2 : 개발 환경 세팅 & 기본 실행
+- 파일명과 클래스명은 같아야 한다
+- 클래스 내 메서드 main 을 찾아 실행한다
+    - 궁금.. main 은 꼭 public static void main(String[] args) 형태여야 하는가?
+        - 🙆🏻‍♀️ args 는 변수명이라 이름 바꿔도 되는데 public static void main(String[] 변수명) 형태는 고정
+    - psvm 으로 인텔리제이가 자동완성 해준다 !!
+- 자바에서 세미콜론은 필수
+- 작성된 자바 소스 파일(.java)이 컴퓨터에서 실행되기까지의 일반적인 과정
+    - 소스 코드(.java) -> 컴파일(.class) -> JVM
+
+<br />
+
+<img src="/tech-resource//java-basics-by-kimyounghan-lecture/section1-2.png" alt="section1-2" style={{height: '200px'}} />
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# SECTION 3 : 변수
+- package 를 만들었다면 클래스 파일 내에 package 를 선언해야 된다
+    - src/variable/Var1.java 안에 아래 package 선언
+    - ```
+        package variable;
+        public class Var1 {}
+        ```
+- (지역)변수 선언 및 값 대입 : 타입 변수명 = 저장할 값
+    - ```
+        int a;
+        a = 10;
+        int a = 10;
+
+        // 여러 개 선언 가능
+        int b, c;
+        int b = 2, c = 3;
+        ```
+    - 선언만 하고 초기화 안 한 채 해당 변수를 실행하면 오류남
+- 변수 타입
+    - int (정수) double (실수) boolean (참과 거짓) char (문자 하나) String (문자열)
+    - char 은 작은 따옴표, String 은 큰 따옴표로 감싸야 함 (문자 하나 쓸 때도 String 으로 선언 가능)
+    - 정수
+        - long > int > short > byte (메모리 공간)
+        - 보통 int 쓰고 20억 넘어갈 것 같으면 long
+        - 숫자가 int 형의 범위를 넘어가서 long 을 쓸 땐 숫자 뒤에 L 을 붙여야 함. (ex. long l = 123123213121L)
+    - 실수
+        - float > double
+        - float 을 쓸 땐 숫자 뒤에 f 를 붙여야 함. (ex. float f = 10.5f)
+    - 보통 int, long, double, String, boolean 을 많이 쓰고 다른 건 잘 안 씀
+- 변수 명명 관례
+    - 보통 camelCase로 작성
+    - 클래스는 PascalCase, 상수는 UPPER_CASE, 패키지는 모두 소문자
+
+<br />
+
+<img src="/tech-resource//java-basics-by-kimyounghan-lecture/section3.png" alt="section3" style={{height: '200px'}} />
+
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# SECTION 4 : 연산자
+- 수학적으로도 허용되지 않지만) 자바에선 산술 연산할 때 0으로 나눌 경우 (예시 : 10 / 0) 프로그램 오류가 발생한다!
+- 비교 연산자
+    - ==, != 으로 한다 (3개 아님)
+    - 문자열은 .equals() 메서드를 사용한다
+        - 사용 예시 : <b>“비교문자열1“.equals(“비교문자열2“);</b>
+
+<br />
+
+<img src="/tech-resource//java-basics-by-kimyounghan-lecture/section4.png" alt="section4" style={{height: '200px'}} />
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# SECTION 5 : 조건문
+- switch 형식
+    - ```
+        // 기본
+        switch (조건문에 넣을 값) {
+        case 조건값:
+        실행할 코드;
+        break;
+        case 조건값2:
+        실행할 코드;
+        break;
+        default:
+        기본으로 실행되는 코드;
+        }
+        // 새로운 문법
+        넣을 변수 = switch (조건문에 넣을 값) {
+        case 조건값 -> 실행할 코드;
+        case 조건값2 -> 실행할 코드;
+        default -> 기본으로 실행되는 코드;
+        }
+        ```
+    - break 가 없으면 계속 검사
+    - case 에 충족하고, break 가 걸렸으면 default 실행 x
+    - 새로운 문법은 → 를 사용하고, 반환을 하여 바로 변수에 저장할 수 있음
+
+<br />
+
+<img src="/tech-resource//java-basics-by-kimyounghan-lecture/section5.png" alt="section5" style={{height: '200px'}} />
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# SECTION 6 : 반복문
+- fot 문에서 초기식, 조건문, 증감식 모두 생략 가능. 생략해도 세미콜론은 넣어야 한다
+    - ```
+        // 조건문 생략 예시
+        for (int i = 0; ; i++) {}
+        // 무한반복 (while (true) 와 같은 동작)
+        for (;;) {}
+        ```
+- print() 를 쓰면 개행이 되지 않는다! 개행이 필요할 땐 println() 사용하기
+
+<br />
+
+<img src="/tech-resource//java-basics-by-kimyounghan-lecture/section6.png" alt="section6" style={{height: '200px'}} />
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# SECTION 7 : 스코프, 형변환
+- 스코프
+    - 변수는 꼭 필요한 범위에서 한정되어 사용하는 게 좋다. 변수의 스코프는 꼭 필요한 곳에서 한정해서 사용하자. 메모리를 효율적으로 사용하고, 유지보수에도 좋다!
+- 자동 형변환 (묵시적 형변환)
+    - 작은 범위의 값을 큰 범위의 값에 대입할 경우 명시적으로 형변환을 표기하지 않아도 자동으로 된다.
+        - int < long < double
+        - ```
+            int intValue = 10;
+            long longValue = intValue; // int -> long
+            double doubleValue = intValue; // int -> double
+            double doubleValue2 = 20L; // long -> double
+            ```
+- 명시적 형변환
+    - 큰 번위의 값을 작은 범위에 대입할 경우 숫자가 손실되거나 오버플로우가 발생할 수 있는데, 이걸 감수할 정도로 강제로 타입을 바꿔서 저장을 하고 싶다면 아래처럼 작성하면 된다.
+    - ```
+        int intValue;
+        double doubleValue = 10.0;
+        intValue = (int) doubleValue; // 타입 명시
+        ```
+- 계산과 형변환
+    - 같은 타입끼리의 계산은 같은 타입의 결과를 낸다 → int + int = int / double + double = double
+    - 서로 다른 타입의 계산은 큰 범위로 자동 형변환이 일어난다. → int + long = long / double + long = double
+
+<br />
+
+<img src="/tech-resource//java-basics-by-kimyounghan-lecture/section7.png" alt="section7" style={{height: '200px'}} />
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# SECTION 8 : 훈련 (스캐너)
+- 자바에선 사용자 입력을 받을 때 Scanner 클래스를 제공해준다.
+    - ```
+        import java.util.Scanner;
+        // class 내부
+        Scanner scanner = new Scanner(System.in);
+        scanner.nextLine(); // 입력을 string 으로 가져온다.
+        scanner.nextInt(); // 입력을 정수(int)형으로 가져온다.
+        scanner.nextDouble(); // 입력을 실수(double)형으로 가져온다.
+        ```
+- 아래 코드처럼 반복문에서 입력 후 Enter 하면 nextLine 이 들어간 것처럼 되어서 프로그램 오류가 발생할 수 있음.
+    - ```
+        Scanner scanner = new Scanner(System.in);
+        // 예시
+        while (true) {
+        String name = scanner.nextLine();
+        int age = scanner.nextInt(); // 여기서 입력하고 엔터하면 위 name 에 이미 \n 이 들어간 상태가 됨.
+        scanner.nextLine(); // 따라서 방어 코드가 필요함
+        }
+        ```
+
+<br />
+
+<img src="/tech-resource//java-basics-by-kimyounghan-lecture/section8.png" alt="section8" style={{height: '200px'}} />
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# SECTION 9 : 배열
+- 배열 선언 및 생성
+    - int[] 변수명 = new int[요소개수]
+    - ```
+        // 배열 선언 및 생성, 대입 예시
+        int[] x1 = new int[5];
+        x[0] = 2;
+
+        // 한 번에도 가능
+        int[] x2 = {2, 3, 5};
+        ```
+    - 배열을 출력할 땐 배열[인덱스] 형태로 출력. 배열 그대로 바로 출력하면 배열 참조값이 출력됨
+- 2차원 배열 선언 및 생성
+    - int[][] 변수명 = new int[외부요소개수][내부요소개수]
+    - ```
+        int[][] x1 = new int[2][3];
+        x1[0][0] = 2;
+
+        // 한 번에도 가능
+        int[][] x2 = {{3, 4}, {1, 2}};
+        ```
+- 향상된 for 문 (for-each)
+    - for (int 변수명 : 배열) {}
+    - ```
+        int[] numberArr = {1, 2, 3, 4, 5};
+
+        // numberArr 를 순회하며 출력 --> 1 2 3 4 5
+        for (int number: numberArr) {
+        System.out.println(number);
+        }
+        ```
+
+<br />
+
+<img src="/tech-resource//java-basics-by-kimyounghan-lecture/section9.png" alt="section9" style={{height: '200px'}} />
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# SECTION 10 : 메서드
+- 메서드 정의
+    - 접근제어자 기타키워드 반환타입 메서드이름 ([매개변수]) {}
+    - 접근제어자 (메서드의 접근 가능 범위)
+        - public : 모든 클래스에서 접근 가능
+        - …
+    - 기타키워드
+        - static : 인스턴스를 생성하지 않아도 클래스 이름으로 호출 가능
+    - 메서드 이름은 보통 동사로 시작하며 카멜케이스 (ex. printReport, addCustomer)
+- 인수는 메서드 내부로 들어가는 값 (= 인자) (호출)
+- 매개변수는 메서드 호출부와 메서드 내부 사이에서 값을 전달하는 역할을 하는 변수 (정의)
+- 인수와 매개변수 예시
+    - ```
+        int call(String data) {}
+        call("Hello");
+
+        여기서 Hello 는 인수
+        Hello 를 받아서 저장된 data 를 매개변수라고 표현
+        ```
+- 매개변수 타입과 실제 전달하는 값의 타입이 다른 경우 형변환을 해줘야 하는데 자동 형변환이 되는 경우는 명시적으로 하지 않아도 에러가 발생하지 않지만, 자동 형변환이 되지 않는 경우는 명시적으로 형변환을 표시해줘야 한다
+    - '작은 범위의 값을 큰 범위의 값에 대입할 경우 명시적으로 형변환을 표기하지 않아도 자동으로 된다.'
+- 메서드 시그니처 : 자바에서 메서드를 구분할 수 있는 고유한 식별자를 뜻함 → 메서드 이름 + 매개변수 타입(순서)
+- <b>자바는 메서드 오버로딩이 가능해서 메서드 이름이 같아도 매개변수 타입이 같으면 에러가 발생하지 않는다 !</b>
+
+<br />
+
+<img src="/tech-resource//java-basics-by-kimyounghan-lecture/section10.png" alt="section10" style={{height: '200px'}} />
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# Reference
+
+[김영한의 자바 입문편](https://www.inflearn.com/course/%EA%B9%80%EC%98%81%ED%95%9C%EC%9D%98-%EC%9E%90%EB%B0%94-%EC%9E%85%EB%AC%B8)
