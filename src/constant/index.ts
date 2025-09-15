@@ -1,2 +1,2 @@
-export const techCategoryList = ["react", "javascript", "java"];
+export const techCategoryList = ["react", "next", "javascript", "java"];
 export const reviewCategoryList = ["book"];
