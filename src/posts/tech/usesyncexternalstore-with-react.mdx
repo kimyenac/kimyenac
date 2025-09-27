@@ -1,0 +1,150 @@
+---
+slug: usesyncexternalstore-with-react
+title: useSyncExternalStore with React
+date: 2025-09-27
+description: 외부 store를 구독할 수 있는 React Hook 'useSyncExternalStore' 를 정리합니다.
+category: react
+tag: tech
+---
+
+사실 저는 업무에서 트러블슈팅 혹은 적절한 기능을 찾기 위해 공식문서를 그때그때 찾아서 도움받는 경우는 있었어도,
+공부를 위한 용도로 훑어서 읽어보았던 공식 문서에서 도움이 되었던 경우는 거의 없었는데요.
+최근에 업무에서 react-i18next 의 i18n 을 구독해서 상태를 갖는 코드를 리팩토링한 적이 있었는데,
+그때 공식문서에서 읽었던 useSyncExternalStore 가 떠올라 사용하게 되었습니다. <br /> <br />
+
+이슈를 진행하면서 useSyncExternalStore 에 대한 React 공식문서 내용을 한 번 더 읽어보았는데,
+궁금한 점이 몇 가지 더 있어서 레퍼런스를 좀 찾아보다가 블로그에도 공유하면 좋을 것 같아서 정리해보고자 합니다. <br /> <br />
+
+---
+
+<br />
+
+# useSyncExternalStore
+
+useSyncExternalStore 는 React 18에서 등장한 Hook 으로, 외부 상태 라이브러리(redux, recoil 과 같은)나
+브라우저 api 처럼 React 바깥에서 관리되는 데이터를 안전하게 구독하기 위해 도입된 기능입니다.
+특히 동시성 렌더링과 SSR 환경에서 데이터 불일치를 막는 게 핵심 목적입니다.
+
+<br /> <br />
+
+useSyncExternalStore 의 매개변수는 총 3개로 이루어져 있습니다.
+
+```javascript
+const snapshot = useSyncExternalStore(
+  subscribe,         // 스토어 변화 알림 등록
+  getSnapshot,       // 현재 스토어 상태 읽기
+  getServerSnapshot  // (옵션) 서버 렌더링 시 상태 읽기
+);
+```
+
+첫 번째는 subscribe(callback) 으로 필수값입니다. 외부 상태값이 바뀌면 callback 을 실행하고,
+React 가 재렌더링을 합니다. <br /> <br />
+
+두 번째 매개변수는 getSnapshot() 으로 필수값입니다. 현재의 스토어 상태를 읽어서 반환하는 함수로,
+동일한 store 상태일 경우 반복 호출해도 동일한 반환값을 줘야 합니다. 저장소가 변경되어 반환된 값이 달라지면
+(Object.is 로 동일성 비교) React 는 컴포넌트를 리렌더링합니다. <br /> <br />
+
+마지막 세 번째 매개변수는 getServerSnapshot() 으로 옵셔널 값입니다. 서버 렌더링 중 또는 하이드레이션 과정에서
+사용할 초기 상태값을 제공합니다. 클라이언트 환경과 서버간 일치성 유지가 중요합니다. <br /> <br />
+
+getServerSnapshot 를 사용하면, 서버에서 렌더링할 때와 하이드레이션 중에 사용되는데,
+서버에서의 상태 값과 클라이언트 초기 렌더링 시의 상태 값이 동일해야 합니다. 그렇지 않으면 하이드레이션 mismatch 등이 발생할 수 있습니다.
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# 사용 예시
+
+```javascript
+// 브라우저 API 구독
+function useOnlineStatus() {
+  return useSyncExternalStore(
+    (callback) => {
+      window.addEventListener("online", callback);
+      window.addEventListener("offline", callback);
+      return () => {
+        window.removeEventListener("online", callback);
+        window.removeEventListener("offline", callback);
+      };
+    },
+    () => navigator.onLine,
+    () => true // 서버 렌더링 시 기본값
+  );
+}
+
+// 외부 스토어 구독
+function useTodos() {
+  return useSyncExternalStore(
+    todoStore.subscribe,
+    todoStore.getSnapshot
+  );
+}
+```
+
+아래는 제가 실제 이슈를 진행하면서 적용한 코드로, react-i18next 의 i18n 을 props 로 받아 초기화 여부를 반환하는 함수입니다.
+```
+export const useI18nInitialized = (i18n: any) => {
+  return useSyncExternalStore(
+    (cb) => {
+      i18n.on('initialized', cb);
+      return () => i18n.off('initialized', cb);
+    },
+    () => i18n.isInitialized, // CSR snapshot
+    () => i18n.isInitialized, // SSR snapshot
+  );
+};
+```
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# 주의사항
+
+useSyncExternalStore 사용 시 주의사항과 그에 대한 트러블슈팅 내용을 정리해보겠습니다. <br /> <br />
+
+먼저 getSnapshot 반환 값의 캐싱 문제가 있는데, getSnapshot 이 매번 다른 객체를 반환하면
+React 가 "항상 변화가 있는 것으로" 인지하여 불필요한 리렌더링 혹은 무한 루프가 발생할 수 있습니다.
+이를 해결하기 위해선 가능한 불변 데이터를 사용하거나, 이전 상태값과 비교해서 실제 변화가 있을 때만
+새 객체를 반환하도록 구현하면 됩니다. <br /> <br />
+
+컴포넌트 내부에서 subscribe 함수를 정의하면 리렌더링마다 새로운 함수가 되어 React 입장에서
+"새 subscribe" 로 인식하고, 결국 기존 구독을 해제하고 새로 상태를 구독하게 되는데
+성능/비교 가능성 측면에서 좋지 않습니다. 이를 해결하기 위해선 subscribe 를 컴포넌트 외부로 두거나,
+useCallback 을 써서 의존성 변화가 없으면 같은 함수를 쓰도록 하면 됩니다. <br /> <br />
+
+만약 non-blocking transition 중에 상태 값이 바뀌면, React 는 DOM 변경 직전에 getSnapshot 을 한 번 더 호출하여 값 변화가 있었는 지 체크를 하는데 만약 값이 다르면
+blocking 업데이트로 전환하여 동기적으로 업데이트를 처리하도록 보장합니다. 이는 일관된 모습을 사용자에게 제공하기 위함입니다. <br /> <br />
+
+마지막으로 렌더링 중에 상태 값에 의존해서 suspense 또는 지연(lazy) 컴포넌트 호출 등을 조건부로 실행하는 것은
+UX/일관성 측면에서 문제를 일으킬 수 있어 권장되지 않습니다.
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# 언제 써야 할까?
+
+Redux, Zustand, Jotai 같은 외부 상태 관리 라이브러리에서 React 18 호환성을 보장할 떄, <br />
+브라우저 API 이벤트를 React 상태처럼 사용하고 싶을 때, <br />
+SSR 환경에서 외부 스토어 상태를 안정적으로 주입해야 할 때 사용하면 좋습니다. <br /> <br />
+
+정리하면, <b>useSyncExternalStore</b>는 React 외부의 데이터를 안전하게 구독하기 위한 표준 Hook 으로써,
+외부 세계와 리액트 세계를 일관성 있게 연결해주는 다리라고 할 수 있습니다.
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# Reference
+
+- [useSyncExternalStore 공식문서](https://ko.react.dev/reference/react/useSyncExternalStore)
