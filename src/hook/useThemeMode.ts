@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { StorageKey, ThemeMode } from "@/type";
-import { useRecoilState } from "recoil";
+import { useAtom } from "jotai";
 import { themeModeStore } from "@/store/themeModeStore";
 
 const useThemeMode = () => {
-  const [themeMode, setThemeMode] = useRecoilState(themeModeStore);
+  const [themeMode, setThemeMode] = useAtom(themeModeStore);
 
   useEffect(() => {
     const storageThemeMode: ThemeMode =

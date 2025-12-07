@@ -1,14 +1,14 @@
 "use client";
 
-import { RecoilRoot } from "recoil";
+import { Provider } from "jotai";
 import ThemeProvider from "@/component/ThemeProvider";
 import { ReactNode } from "react";
 
 const Providers = ({ children }: { children: ReactNode }) => {
   return (
-    <RecoilRoot>
+    <Provider>
       <ThemeProvider>{children}</ThemeProvider>
-    </RecoilRoot>
+    </Provider>
   );
 };
 

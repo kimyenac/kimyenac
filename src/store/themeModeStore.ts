@@ -1,7 +1,4 @@
-import { atom } from "recoil";
+import { atom } from "jotai";
 import { ThemeMode } from "@/type";
 
-export const themeModeStore = atom<keyof typeof ThemeMode>({
-  default: "DARK",
-  key: "theme-mode-store-key",
-});
+export const themeModeStore = atom<keyof typeof ThemeMode>("DARK");
