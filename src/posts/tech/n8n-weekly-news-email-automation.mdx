@@ -1,0 +1,175 @@
+---
+slug: n8n-weekly-news-email-automation
+title: n8n으로 주간 뉴스 메일 자동화하기
+date: 2026-01-28
+description: AI 스터디 첫 번째 과제로 n8n 워크플로우를 만들면서 배운 n8n의 기본 사용법과 유용한 노드들을 공유합니다.
+category: ai
+tag: tech
+---
+
+회사에서 업무 시간 중 일정 시간 스터디 시간으로 지원해주는 제도가 있어서
+격주로 금요일마다 AI 스터디를 진행하기로 했습니다.
+<br />
+
+첫 번째 스터디 과제로 n8n 을 활용해서 각자 워크플로우를 만들어보기로 했는데요,
+저는 최근에 한국경제 신문을 구독해서 보고 있는데, 매주 발행되는 뉴스들을 모아서 Top 10 을
+메일로 발송하는 워크플로우가 있으면 편리할 것 같아서 n8n 으로 자동화해보았습니다.
+<br />
+
+워크플로우를 만들면서, n8n 의 기본적인 사용법과 유용한 노드들에 대해 알게 된 점들을 공유드리려고 합니다.
+<br />
+
+---
+
+<br />
+
+# n8n 이란?
+
+먼저 n8n 은 다양한 서비스와 API를 노드(Node) 단위로 연결해
+자동화 워크플로우를 만들 수 있는 오픈소스 툴입니다. <br />
+오픈소스 기반, 셀프 호스팅 가능, JavaScript/Python 으로 로직을 직접 작성 가능하다는 특징 덕분에
+개발자 친화적인 자동화 도구라는 인상을 받았습니다. GUI 기반으로 플로우를 구성하면서도,
+필요할 때는 코드로 자유롭게 제어할 수 있다는 점이 n8n 의 가장 큰 강점입니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# n8n 주요 노드 정리
+
+n8n 의 노드는 "입력 -> 처리 -> 출력" 구조가 명확해서,
+복잡한 자동화도 단계별로 나눠서 설계하기 좋았습니다.
+
+### Trigger 계열 노드 (워크플로우의 시작점)
+- Schedule Trigger : 특정 시간/주기마다 워크플로우 실행 (Cron 표현식 없이 설정 가능)
+- Webhook : 외부 HTTP 요청으로 워크플로우 실행 (API 서버처럼 활용 가능)
+- Manual Trigger : 테스트용 수동 실행 (워크플로우 개발 단계에서 유용)
+
+<br />
+
+### 데이터 처리 / 가공 노드
+- Set : 필드 추가, 수정, 삭제 등 데이터 구조를 빠르게 정리할 때 사용
+- Code (Function) : JavaScript/Python 코드로 로직 작성 (조건 분기, 반복 처리, 포맷 변환 등)
+- Merge : 여러 입력 데이터를 하나로 병합 (AND / OR 방식 지원)
+- IF : 조건에 따라 워크플로우 분기 ("조건 만족 / 불만족" 흐름 분리 가능)
+
+<br />
+
+### 외부 데이터 연동 노드
+- HTTP Request : REST API 호출 (인증 헤더, 파라미터 설정 가능하며 외부 서비스 연동의 기본)
+- RSS Read : RSS 피드 기반 콘텐츠 수집 (뉴스, 블로그 자동화에 최적)
+
+<br />
+
+### AI / 텍스트 처리 노드
+- OpenAI : 텍스트 생성, 요약, 분류 등 AI 작업 수행 (다른 노드와 쉽게 연결 가능)
+
+<br />
+
+### 결과 전달 / 액션 노드
+- Send Email : SMTP 기반 메일 발송 (HTML 메일 지원)
+- Slack / Discord : 메세지, 알림 전송 (업무 자동화에 자주 활용)
+- Notion / Google Sheets : 결과 데이터 저장 (로그, 기록 자동화에 유용)
+
+<br /> <br />
+
+---
+
+<br />
+
+# n8n 설치
+
+macOS (Colima 사용 - Docker Desktop 라이선스 이슈 회피)
+```bash
+# Colima + Docker 설치
+brew install docker colima
+
+# Colima 시작
+colima start
+
+# 설치 확인
+docker --version
+colima status
+```
+
+n8n 설치
+```bash
+docker run -d \
+  --name n8n \
+  -p 5678:5678 \
+  -v n8n_data:/home/node/.n8n \
+  n8nio/n8n
+```
+
+Docker 실행 오류
+```
+1. Colima 재시작: colima restart
+2. 시스템 재부팅
+3. Colima 재설치: brew reinstall colima docker
+```
+
+<br /> <br />
+
+---
+
+<br />
+
+# n8n 예시: 주간 뉴스 메일 자동화 워크플로우
+
+서론에서 설명했던 주간 뉴스 메일 자동화 워크플로우의 전체 흐름은 다음과 같습니다. <br />
+<b>"매주 토요일 오전 9시마다 / 발송일 기준 지난 주(토~금) 동안의 / 한국경제 TOP 10 뉴스를 메일로 전송한다."</b>
+
+```text
+Schedule Trigger
+ → RSS Read (한국경제 RSS 피드)
+ → Code (뉴스 10개 추출해서 타이틀, 링크 정리)
+ → Code (HTML 메일 생성)
+ → Send Email
+```
+
+<br />
+전체 워크플로우
+<img src="/tech-resource/n8n-weekly-news-email-automation/workflow.png" style={{height: '300px', marginTop: '4px'}} />
+
+<br /> <br />
+
+단계별로 설명하면,
+
+- Schedule Trigger : 매주 토요일 오전 9시에 워크플로우 실행
+- RSS Read : 한국경제 뉴스 RSS 피드에서 기사 목록 수집
+- Code 노드 (데이터 정리) : 지난 주 기준 뉴스 필터링 후 상위 10개 뉴스 추출, 제목과 링크만 가공
+- Code 노드 (HTML 생성) : 메일에 사용할 HTML 콘텐츠 생성 후 링크 포함된 뉴스 리스트를 구성
+- Send Email : HTML 메일 발송
+
+여기서 주의할 점은, 네이버 메일의 경우 SMTP 비밀번호를 별도로 설정해야 한다는 점입니다. [네이버 SMTP 설정 방법](https://help.naver.com/notice/noticeView.help?noticeNo=22533&serviceNo=30021&page=1&lang=%251%24s)
+
+<br />
+전송 받은 예시 (테스트로 인해 월요일 발송)
+<img src="/tech-resource/n8n-weekly-news-email-automation/result.png" style={{height: '300px', marginTop: '4px'}} />
+
+<br />
+
+<br /> <br />
+
+---
+
+<br />
+
+# 마무리
+
+이번 과제를 통해 n8n 을 처음 사용해봤는데, 자동화를 빠르게 실험해보기 좋은 도구라는 인상을 받았습니다. <br />
+시각적인 플로우 구성이 가능하고, RSS, 이메일 등 실사용 노드가 풍부하며 JavaScript/Python 코드 작성도 지원해서
+단순 자동화 도구를 넘어, 개발자에게 친화적인 워크플로우 엔진에 가깝다고 느꼈습니다.
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# Reference
+
+- [https://docs.n8n.io/](https://docs.n8n.io/)
+- [https://blog.n8n.io/](https://blog.n8n.io/)
