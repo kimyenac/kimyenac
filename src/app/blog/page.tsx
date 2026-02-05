@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import React from "react";
 import SimpleInfo from "@/component-presentation/SimpleInfo";
-import Content from "@/app/review/Content";
+import Content from "@/app/blog/Content";
 
 export const metadata: Metadata = {
   title: "개발 외 감상들",

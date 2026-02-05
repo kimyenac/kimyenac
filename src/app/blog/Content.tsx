@@ -10,7 +10,7 @@ const Content = () => {
 
   return (
     <PostList
-      tag="review"
+      tag="blog"
       categoryList={reviewCategoryList}
       setSelectedCategory={(category: string) =>
         setSelectedReviewCategory((prev) =>

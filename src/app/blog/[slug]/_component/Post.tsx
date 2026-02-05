@@ -13,7 +13,7 @@ const mdxComponents: MDXComponents = {
 };
 
 const Post = ({ slug }: { slug: string }) => {
-  const post = getPostDetail({ slug, tag: "review" });
+  const post = getPostDetail({ slug, tag: "blog" });
 
   if (!post) notFound();
 

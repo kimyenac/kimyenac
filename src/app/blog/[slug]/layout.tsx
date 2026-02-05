@@ -4,7 +4,7 @@ import { getPostDetail } from "@/service/posts";
 export function generateMetadata({
   params: { slug },
 }: Readonly<{ params: { slug: string } }>): Metadata {
-  const post = getPostDetail({ slug, tag: "review" });
+  const post = getPostDetail({ slug, tag: "blog" });
 
   if (!post) return {};
 
