@@ -14,7 +14,7 @@ export const getAllPosts = ({
     .filter(
       (post) =>
         (tag ? post._raw.sourceFileDir === tag : true) &&
-        (category ? post.category === category : true),
+        (category ? post.category.split(' · ').includes(category) : true),
     );
 };
 
