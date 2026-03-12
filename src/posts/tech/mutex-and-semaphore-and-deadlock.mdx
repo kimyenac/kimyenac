@@ -1,0 +1,293 @@
+---
+slug: mutex-and-semaphore-and-deadlock
+title: Mutex, Semaphore 그리고 Deadlock
+date: 2026-03-12
+description: 동시성 문제의 흐름에 대해서 정리해보고자 합니다.
+category: cs
+tag: tech
+---
+
+# 밀터스레드에서 발생하는 문제: Race Condition
+
+여러 스레드가 동시에 같은 데이터를 수정하면 문제가 발생할 수 있습니다.
+아래의 코드로 예시를 들어보겠습니다.
+
+```
+balance = 1000
+
+// 두 개의 스레드가 동시에 실행
+Thread A: balance += 100
+Thread B: balance -= 200
+
+// 실행 과정
+1. balance 읽기
+2. 계산
+3. balance 저장
+
+// 문제 상황
+Thread A: balance 읽기 (1000) -> 1100 저장
+Thread B: balance 읽기 (1000) -> 800 저장
+
+// 최종 결과
+balance = 800 (실제론 900이어야 함)
+```
+
+이것이 Race Condition 입니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# Critical Section
+
+Race Condition 이 발생하는 코드를 Critical Section 이라고 합니다.
+
+```
+balance = balance + 100
+```
+
+이 코드는 동시에 실행되면 안 됩니다. 그래서 등장한 것이 동기화(Synchronization) 입니다.
+여기서 대표적인 도구가 Mutex와 Semaphore 입니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# Mutex (Mutual Exclusion)
+
+Mutex는 한 번에 하나의 스레드만 자원에 접근하도록 하는 lock 입니다.
+
+```
+// 구조
+Thread A ── lock ──▶ Critical Section ── unlock
+Thread B ────────── wait
+Thread C ────────── wait
+
+// 그림으로 보면
+🔐 Mutex Lock
+Thread A ─────▶ [Shared Resource] ─────▶ unlock
+Thread B ───────────── wait
+Thread C ───────────── wait
+
+// 비유를 한다면 화장실 열쇠 하나입니다.
+열쇠 1개
+↓
+한 명만 사용 가능
+↓
+끝나면 다음 사람
+```
+
+코드로 예를 들어보면, 아래처럼 처리하여 동시에 접근하는 것을 막을 수 있습니다.
+```javascript
+await mutex.lock()
+
+try {
+  balance += 100
+} finally {
+  mutex.unlock()
+}
+```
+
+<br /> <br />
+
+---
+
+<br />
+
+# Semaphore
+
+Semaphore는 동시에 접근 가능한 자원의 개수를 관리하는 동기화 도구입니다.
+Mutex와 차이는 Mutex 는 한 번에 하나의 스레드만 허용하지만, Semaphore는 여러 스레드(N개)가 동시에 접근할 수 있도록 허용한다는 점입니다.
+
+<br />
+
+### Semaphore 동작
+
+Semaphore 내부에는 counter 가 있습니다. 이 counter 는 동시에 접근 가능한 자원의 개수를 나타냅니다.
+
+```
+// 예시
+counter = 3
+
+// 동작
+wait()   -> counter--
+signal() -> counter++
+```
+
+### 그림
+```
+Resource Pool (3)
+Thread A ──▶ 사용
+Thread B ──▶ 사용
+Thread C ──▶ 사용
+
+Thread D ──▶ 대기
+Thread E ──▶ 대기
+
+// 비유하면 주차장과 같은 개념
+주차 자리 = 3
+
+🚗 A → 주차
+🚗 B → 주차
+🚗 C → 주차
+🚗 D → 대기
+
+차가 나가면 🚗 D → 입장
+```
+
+<br /> <br />
+
+---
+
+<br />
+
+# Mutex vs Semaphore 차이
+
+먼저 접근 수 관점에서, Mutex 는 1개, Semaphore 는 N개입니다. <br />
+그리고 소유권 관점에서, Mutex 는 있지만, Semaphore 는 없습니다.
+즉, Mutex 는 lock 을 건 스레드만 unlock 할 수 있지만, Semaphore 는 아무 스레드나 signal 할 수 있습니다. <br />
+목적 관점에서, Mutex 는 상호 배제를 위해, Semaphore 는 자원 관리와 동기화를 위해 사용됩니다. <br />
+예시로 Mutex 는 데이터 수정, Semaphore 는 connection pool 관리에 사용됩니다. <br /> <br />
+
+핵심적으로 Mutex = Lock, Semaphore = Counter 라고 생각하시면 됩니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# 새로운 문제: Deadlock
+
+그런데 동기화를 사용하면 또 다른 문제가 생길 수 있습니다. 바로 Deadlock 입니다. <br />
+Deadlock 은 두 개 이상의 스레드가 서로가 가진 자원을 기다리면서 무한 대기 상태에 빠지는 상황입니다.
+
+<br />
+
+### Deadlock 예시
+
+```
+Thread A → Mutex 1 보유
+Thread B → Mutex 2 보유
+
+// 서로 다른 자원 요청
+Thread A → Mutex 2 요청
+Thread B → Mutex 1 요청
+
+// 결과
+Thread A → B가 unlock 기다림
+Thread B → A가 unlock 기다림
+```
+
+둘 다 영원히 기다리게 됩니다.
+<br />
+
+### Deadlock 그림
+```
+Thread A
+  │
+  │ holds
+  ▼
+Mutex 1
+
+Thread B
+  │
+  │ holds
+  ▼
+Mutex 2
+
+
+Thread A ── waiting ──▶ Mutex 2
+Thread B ── waiting ──▶ Mutex 1
+
+// 결론
+A → B 기다림
+B → A 기다림
+```
+
+<br /> <br />
+
+---
+
+<br />
+
+# Deadlock 이 발생하는 4가지 조건과 해결 방법
+
+Deadlock 은 다음 조건이 모두 만족될 때 발생합니다. <br />
+1. Mutual Exclusion (자원을 하나의 스레드만 사용 가능)
+2. Hold and Wait (지원을 가지고 있으면서 다른 자원을 기다림)
+3. No Preemption (자원을 강제로 빼앗을 수 없음)
+4. Circular Wait (스레드들이 원형으로 서로 기다림)
+
+<br />
+
+Deadlock 을 해결하는 방법으로는 다음과 같은 것들이 있습니다. <br /> <br />
+첫 번째 <b>Lock 순서 통일: 항상 Mutex1 -> Mutex2 순서로 lock</b>
+```
+// 예시
+❌ A: lock 1 → lock 2
+❌ B: lock 2 → lock 1
+
+⭕ A: lock 1 → lock 2
+⭕ B: lock 1 → lock 2
+```
+
+두 번째 <b>Timeout 사용: tryLock(timeout) -> 일정 시간 이후 lock 포기</b>
+
+<br />
+
+세 번째 <b>Lock 최소화: Critical Section을 줄입니다.</b>
+```
+// 예시
+bad
+lock()
+network request
+unlock()
+
+good
+network request
+lock()
+update
+unlock()
+```
+
+<br /> <br />
+
+---
+
+<br />
+
+# 마무리
+
+멀티스레드 환경에서 중요한 것은 공유 자원 제어입니다.
+
+```
+Race Condition
+-> 여러 스레드가 동시에 같은 데이터를 수정할 때 발생하는 문제
+
+Mutex
+→ Race Condition 해결방법 / 하나의 스레드만 접근
+
+Semaphore
+→ Race Condition 해결방법 / 여러 스레드 접근 제한
+
+Deadlock
+→ 서로 기다리다 멈춘 상태
+```
+
+위 개념은 동시성 프로그래밍의 핵심이므로 잘 이해해야 되는 개념입니다.
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# Reference
+
+- [https://www.geeksforgeeks.org/operating-systems/mutex-vs-semaphore/](https://www.geeksforgeeks.org/operating-systems/mutex-vs-semaphore/)
+- [https://www.guru99.com/mutex-vs-semaphore.html](https://www.guru99.com/mutex-vs-semaphore.html)
