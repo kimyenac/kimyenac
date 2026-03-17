@@ -1,0 +1,368 @@
+---
+slug: stack-and-heap-and-virtual-memory
+title: 프로세스 메모리 구조 완전 이해하기
+date: 2026-03-17
+description: Stack, Heap, Virtual Memory 의 개념에 대해 공유합니다.
+category: cs
+tag: tech
+---
+
+프로그램이 실행되면 운영체제는 프로세스를 생성하고 메모리를 할당합니다.
+이때 메모리는 하나의 큰 공간이 아니라 여러 영역으로 나뉘어 관리됩니다.
+대표적인 구조 형태는 아래와 같습니다.
+
+```
+높은 주소
++----------------------+
+|        Stack         |
+|   함수 호출 / 지역변수 |
+|        ↓             |
+|                      |
+|                      |
+|        Heap          |
+|   동적 메모리 할당     |
+|        ↑             |
++----------------------+
+|        Data          |
+|  전역변수 / static    |
++----------------------+
+|        Code          |
+|   프로그램 실행 코드   |
++----------------------+
+낮은 주소
+```
+
+여기서 핵심은 Stack 은 아래 방향으로 성장하고,
+Heap 은 위 방향으로 성장하여 두 영역은 서로를 향해 성장한다는 점입니다.
+
+<br />
+
+---
+
+<br />
+
+# Code 영역 (Text Segment)
+
+Code 영역에는 실행할 프로그램의 기계어 코드가 저장됩니다.
+
+```
+int main() {
+    printf("hello");
+}
+```
+
+이 코드의 컴파일된 기계어가 저장되는 영역입니다. <br />
+읽기 전용이고, 프로그램 실행 동안 변경되지 않으며 여러 프로세스가 공유 가능하다는 특징이 있습니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# Data 영역
+
+Data 영역에는 전역 변수와 static 변수가 저장됩니다.
+
+```
+int global = 10;
+static int count = 0;
+```
+
+Data 영역은 Initialized Data (초기값이 있는 변수) 와
+BBS (Block Started by Symbol, 초기값이 없는 변수) 로 나뉘며
+메모리 구조는 다음과 같습니다.
+
+```
++----------------+
+| Initialized    |
+| Data           |
++----------------+
+| BSS            |
++----------------+
+```
+
+<br /> <br />
+
+---
+
+<br />
+
+# Stack 메모리
+
+Stack 은 함수 호출과 관련된 데이터를 저장하는 영역입니다. <br />
+대표적으로 저장되는 건 지역 변수, 함수 파라미터, 반환 주소, stack frame 등이 있습니다.
+
+<br />
+
+### Stack 동작 방식
+Stack은 LIFO (Last In First Out) 방식으로 동작합니다. <br />
+```
+// 함수 실행 순서: main → foo → bar
+// 종류 순서: bar → foo → main
+main()
+ └ foo()
+     └ bar()
+
+// 메모리 상태
+Stack Top
++---------------+
+| bar frame     |
+| local vars    |
++---------------+
+| foo frame     |
+| local vars    |
++---------------+
+| main frame    |
++---------------+
+```
+
+<br />
+
+### Stack Frame
+Stack Frame 은 함수 호출 시 생성되는 구조로 아래와 같습니다.
+```
++--------------------+
+| parameter          |
++--------------------+
+| return address     |
++--------------------+
+| local variables    |
++--------------------+
+
+// 코드 예시
+void foo(int x) {
+    int a = 10;
+}
+
+// Stack Frame 예시
++-----------+
+| a = 10    |
++-----------+
+| x         |
++-----------+
+| return addr|
++-----------+
+```
+
+<br />
+
+### Stack 특징
+장점은 매우 빠르고, CPU 캐시 친화적이며 자동 메모리 관리가 가능하다는 점입니다. <br />
+단점은 크기 제한이 있고 (보통 몇 MB), 큰 객체 저장 불가, 깊은 재귀는 Stack Overflow 를 일으킬 수 있다는 점입니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# Heap 메모리
+
+Heap 은 런타임에 동적으로 할당되는 메모리 영역입니다. <br />
+```
+// 예시코드
+int* arr = malloc(sizeof(int) * 100);
+```
+
+<br />
+
+### Heap 구조
+
+Heap 은 Stack 과 달리 비연속적으로 할당될 수 있습니다. <br />
+```Heap
++----------------+
+| object A       |
++----------------+
+| free           |
++----------------+
+| object B       |
++----------------+
+| object C       |
++----------------+
+```
+
+<br />
+
+### Heap 특징
+장점으론 크기가 유연하고 큰 데이터 저장이 가능하며, 객체 중심 구조라는 점입니다. <br />
+단점으론, 할당 비용이 크고 메모리 단편화가 발생할 수 있으며 메모리 누수 위험이 있다는 점입니다.
+
+<br />
+
+### Memory Leak 예시
+```
+int* arr = malloc(100);
+
+// free를 안 하면 프로그램 종료 전까지 계속 증가합니다.
+Heap
++--------------+
+| allocated    |
++--------------+
+| allocated    |
++--------------+
+| allocated    |
++--------------+
+```
+
+<br /> <br />
+
+---
+
+<br />
+
+# Stack vs Heap
+
+관리 측면에서 Stack 은 자동으로 관리되고, Heap 은 프로그래머가 직접 관리해야 합니다. <br />
+접근 속도는 Stack 이 빠르고, Heap 은 상대적으로 느립니다. <br />
+메모리 크기는 Stack 이 제한적이고, Heap 은 유연합니다. <br />
+데이터 구조는 Stack 이 함수 호출과 관련된 데이터(지역 변수)를 저장하는 반면, Heap 은 객체 중심 구조입니다. <br />
+메모리를 해제하려면 Stack 은 함수 종료 시 자동으로 해제되고, Heap 은 명시적으로 free() 함수를 호출해야 합니다. <br />
+<br />
+
+요약하면, Stack은 빠르고 자동 관리되는 메모리 영역, Heap 은 유연하지만 관리가 필요한 메모리 영역
+
+<br /> <br />
+
+---
+
+<br />
+
+# 가상 메모리 (Virtual Memory)
+
+지금까지 위에서 설명한 메모리는 물리 메모리(RAM)가 아니라 가상 주소 공간입니다.
+운영체제는 프로그램에게 가짜 메모리 공간을 제공합니다.
+
+<br />
+
+### Virtual Memory 구조
+```
+프로세스 (Virtual Address Space)
+
+0xFFFFFFFF
++------------------+
+|      Stack       |
++------------------+
+|      Heap        |
++------------------+
+|      Data        |
++------------------+
+|      Code        |
++------------------+
+0x00000000
+```
+각 프로세스는 독립적인 주소 공간을 가집니다.
+
+<br />
+
+### Virtual Address -> Physical Address
+CPU는 직접 RAM을 접근하지 않습니다. 아래와 같은 과정으로
+변환을 담당하는 하드웨어가 MMU (Memory Management Unit)입니다.
+```
+CPU
+ ↓
+Virtual Address
+ ↓
+MMU
+ ↓
+Page Table
+ ↓
+Physical Address
+ ↓
+RAM
+```
+
+<br />
+
+### Paging
+가상 메모리는 페이지 단위로 관리됩니다.
+```
+Virtual Memory
+
++-------+
+| Page0 |
++-------+
+| Page1 |
++-------+
+| Page2 |
++-------+
+```
+물리 메모리는 Frame 으로 나뉩니다.
+```
+Physical Memory
+
++--------+
+| Frame0 |
++--------+
+| Frame1 |
++--------+
+| Frame2 |
++--------+
+```
+<br />
+
+<br /> <br />
+
+---
+
+<br />
+
+# Virtual Memory가 필요한 이유
+
+첫 번째, 프로세스 격리를 위해 필요합니다. <br />
+프로세스 A가 0x1000 주소이고, 프로세스 B도 0x1000 주소라고 할 때
+같은 주소지만 실제 메모리는 다릅니다. <br /> <br />
+
+두 번째, RAM보다 큰 프로그램을 실행하기 위해 필요합니다. <br />
+일부 페이지는 디스크(Swap)에 저장됩니다. RAM 부족 -> Page 교체 -> 디스크에서 페이지 로드 -> RAM에서 페이지 교체 하는
+과정을 Swap / Paging Out 이라고 합니다. <br /> <br />
+
+세 번째, 메모리 관리를 효율적으로 하기 위해 필요합니다. <br />
+프로그램은 연속된 주소만 생각하면 됩니다. 실제 RAM 은 불연속이어도 됩니다.
+
+<br />
+
+### 실제 프로세스 메모리 구조
+```
+Linux 예시
+0xFFFFFFFFFFFFFFFF
++-------------------+
+|       Stack       |
++-------------------+
+| Memory mapped     |
+| libraries         |
++-------------------+
+|       Heap        |
++-------------------+
+|       BSS         |
++-------------------+
+|       Data        |
++-------------------+
+|       Code        |
++-------------------+
+0x0000000000000000
+```
+
+<br /> <br />
+
+---
+
+<br />
+
+# 마무리
+
+위 개념을 바탕으로 런타임 문제는 Stack Overflow, Segmentation Fault, Memory leak 를 의심할 수 있고 <br />
+언어 런타임 문제는 JVM Heap, Node.js GC, Rust ownership 시스템 등을 떠올릴 수 있다는 점입니다. <br />
+마지막으로 성능에선 cache locality, allocation cost, memory fragmentation 등을 고려할 수 있다는 점입니다.
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# Reference
+
+- [https://www.geeksforgeeks.org/dsa/stack-vs-heap-memory-allocation/](https://www.geeksforgeeks.org/dsa/stack-vs-heap-memory-allocation/)
+- [https://www.baeldung.com/cs/memory-stack-vs-heap](https://www.baeldung.com/cs/memory-stack-vs-heap)
+- [https://www.cs.cornell.edu/courses/cs3410/2025sp/notes/vm.html](https://www.cs.cornell.edu/courses/cs3410/2025sp/notes/vm.html)
