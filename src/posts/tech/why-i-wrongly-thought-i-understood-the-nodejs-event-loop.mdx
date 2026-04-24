@@ -1,0 +1,127 @@
+---
+slug: why-i-wrongly-thought-i-understood-the-nodejs-event-loop
+title: Node.js Event Loop를 제대로 이해해보기
+date: 2026-04-24
+description: Event Loop 를 제대로 이해하기 위한 공부 기록을 공유합니다.
+category: cs
+tag: tech
+---
+
+# Node.js Event Loop의 진짜 구조
+
+Event Loop 를 설명할 때 보통 Call Stack, Task Queue, Event Loop 가 Queue 에서
+꺼내서 실행한다고 표현합니다. 여기서 빠진 핵심은 실제 Node.js Event Loop 는 단순
+Queue 하나가 아니라는 것입니다. <br /> <br />
+
+Node.js Event Loop 는 6개의 Phase 로 동작합니다. <b>timers → pending callbacks → idle, prepare → poll → check → close callbacks</b>
+<br />
+
+그리고 각 phase마다 자기만의 queue 가 존재합니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# 핵심 Phase 이해하기
+
+첫 번쨰는 timers 입니다. <br />
+setTimeout, setInterval 로 '시간이 지나면 실행' 이 아니라
+'최소 시간이 지난 후, 이 phase 에서 실행' <br /> <br />
+
+두 번째는 poll 입니다. <br />
+I/O 작업 처리 (파일, 네트워크) 로 Event Loop 의 심장 역할이라 할 수 있는데
+주요 특징은 새로운 I/O 를 기다리고, queue 가 비면 대기한다는 점입니다. <br /> <br />
+
+세 번쨰는 check 입니다. <br />
+setImmediate 로 poll 이후 바로 실행되는 phase <br /> <br />
+
+네 번째는 Microtask Queue 입니다. <br />
+Node 에는 Microtask Queue 가 따로 존재하는데 Microtask 종류로는
+Promise.then, queueMicrotask, process.nextTick (Node 전용, 더 우선순위 높음) 가 있습니다.
+중요 규칙은 현재 작업이 끝나면 Microtask 가 전부 실행되고 다음 Phase 로 이동한다는 점이 핵심입니다.
+<br />
+
+코드로 살펴보면
+```
+setTimeout(() => console.log("timeout"), 0);
+setImmediate(() => console.log("immediate"));
+Promise.resolve().then(() => console.log("promise"));
+process.nextTick(() => console.log("nextTick"));
+
+// 실행 결과
+nextTick
+promise
+timeout or immediate (환경에 따라 다름)
+```
+
+현재 코드가 실행이 끝나면 microtask 가 실행되고 (nextTick 이 최우선, 그리고 Promise) 그 다음에
+event loop phase 에 진입됩니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# setTimeout vs setImmediate
+
+setTimeout 은 timers phase, setImmediate 는 check phase 에서 실행되는데,
+핵심은 poll 상태에 따라 순서가 달라집니다.
+
+```javascript
+fs.readFile(__filename, () => {
+    setTimeout(() => console.log("timeout"), 0);
+    setImmediate(() => console.log("immediate"));
+});
+
+// 결과
+immediate
+timeout
+```
+
+이유는 I/O 끝 -> poll -> check 먼저 실행
+
+<br /> <br />
+
+---
+
+<br />
+
+# process.nextTick의 위험성
+
+```
+function loop() {
+    process.nextTick(loop);
+}
+loop();
+```
+
+와 같이 실행 시 Event Loop 가 멈춥니다. (Starvation) 왜냐하면
+nextTick 은 phase 보다 우선되고, 계속 microtask 만 돌게 되기 때문입니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# 마무리
+
+비동기는 병렬이 아닙니다. JS 는 여전히 싱글 스레드고 I/O 만 외부에서 처리되는 방식입니다. <br />
+성능 문제의 원인으로 microtask 과다는 이벤트 루프 지연되고, 긴 sync 코드는 전체 블로킹을 유발할 수 있습니다. <br /> <br />
+
+정리하면, Event Loop 는 단순한 Queue 가 아니라
+<b>Phase 기반 스케줄러 + Microtask 우선 처리 구조</b> 라는 것입니다.
+
+<br /> <br />
+
+---
+
+<br /> <br />
+
+# Reference
+
+- [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model)
+- [https://jakearchibald.com/2015/tasks-microtasks-queues-and-schedules/](https://jakearchibald.com/2015/tasks-microtasks-queues-and-schedules/)
