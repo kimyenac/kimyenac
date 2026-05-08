@@ -1,0 +1,283 @@
+---
+slug: essential-web-infrastructure-for-fe-developer
+title: 프론트엔드 개발자가 알아야 하는 웹 인프라 구조
+date: 2026-05-08
+description: 프론트엔드 개발자가 반드시 알아야 하는 웹 인프라 구조를, '사용자가 웹사이트에 접속하는 순간'을 따라가며 정리한 글입니다.
+category: cs
+tag: tech
+---
+
+프론트엔드 개발자로 일하면서, 인프라 구조에 대해 제대로 알지 못해 부딪히는 한계를 몇 번 느꼈는데요,
+관련해서 공부를 하고 싶어 깊이 학습하기 전에 전체적인 구조를 파악하여 정리한 글을 공유해보고자 합니다.
+
+<br />
+
+---
+
+<br />
+
+# 전체 구조 먼저 보기
+
+```
+[사용자 브라우저]
+        │
+        ▼
+      DNS
+        │
+        ▼
+   CDN / Edge
+        │
+        ▼
+ Load Balancer
+        │
+ ┌──────┴──────┐
+ ▼             ▼
+Web Server   Web Server
+(Nginx)      (Nginx)
+ │              │
+ ▼              ▼
+Application Server
+(Node.js / Spring)
+        │
+        ▼
+     Database
+```
+
+정리하여 볼 때 다음과 같이 역할이 분리되어 있습니다. <br />
+DNS 는 도메인을 IP 주소로 변환하고, CDN 은 정적 파일을 캐싱,
+Load Balancer 는 트래픽을 분산 시키고, Web Server 는 정적 파일을 제공하는 Reverse Proxy 입니다.
+Application Server 는 비즈니스 로직을 처리하고 Database 는 데이터를 저장합니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# DNS - 도메인을 IP 로 변환
+
+우리는 example.com 같은 도메인으로 접속하지만, 실제 네트워크는 IP 주소로 통신합니다.
+```
+example.com → 93.184.216.34
+```
+이 변환을 담당하는 것이 DNS(Domain Name System) 입니다.
+<br />
+
+### DNS 전파 시간
+
+배포 후 도메인을 변경했는데 일부 사용자만 접속이 안 되는 경우가 있을 수 있는데 이건 대부분 DNS 캐시 때문입니다.
+```
+로컬 DNS 캐시
+브라우저 DNS 캐시
+ISP DNS 캐시
+```
+TTL(Time To Live)에 따라 갱신이 늦어집니다.
+<br />
+
+### 서브도메인 전략
+```
+api.example.com
+cdn.example.com
+static.example.com
+```
+실무에서는 역할별로 도메인을 분리하는데, 특히 CDN 은 별도 도메인을 사용하는 경우가 많습니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# HTTPS와 TLS
+
+요즘 웹사이트는 거의 모두 HTTPS 를 사용하는데요, (HTTP + TLS 암호화) HTTPS 연결 시
+브라우저는 다음 과정을 거치게 됩니다.
+```
+브라우저 ↔ 서버
+1. 인증서 확인
+2. 공개키 교환
+3. 암호화 통신 시작
+```
+
+### Mixed Content 문제
+```
+<script src="http://..."></script>
+```
+HTTPS 사이트에서 위처럼 HTTP 리소스를 요청하면 차단되는데, 브라우저 콘솔에서 흔히 보게 되는 오류입니다.
+
+<br />
+
+### Secure Cookie
+```
+Set-Cookie: Secure; HttpOnly;
+```
+로그인/인증 흐름을 이해하려면 HTTPS 지식이 필수입니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# CDN - 정적 파일을 빠르게 제공
+
+CDN(Content Delivery Network)은 정적 파일을 전 세계 Edge 서버에 캐싱합니다.
+```
+사용자 → 가까운 CDN 서버 → 정적 파일 응답
+```
+대표적으로 CloudFront, Cloudflare, Fastly, Akamai 등이 있습니다. <br /> <br />
+
+프론트엔드 프로젝트의 핵심 리소스는 대부분 정적파일입니다.
+```
+HTML
+CSS
+JS Bundle
+Image
+Font
+```
+이 파일들을 빠르게 전달하는 것이 UX 에 매우 중요합니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# 캐시 전략 이해하기
+```
+Cache-Control: max-age=31536000
+```
+브라우저는 1년동안 캐시합니다. 배포했는데 사용자는 여전히 이전 JS 를 받는 경우가 있습니다.
+이건 캐시 때문으로, Hash 기반 파일명으로 해결할 수 있습니다.
+```
+app.js
+↓
+app.a1b2c3.js
+```
+빌드 결과물에 hash 를 붙이면 캐시 무효화(Cache Busting)가 가능합니다.
+Webpack/Vite가 자동으로 처리합니다.
+<br />
+
+### 브라우저 캐시 vs CDN 캐시
+브라우저 캐시는 사용자 PC 에, CDN 캐시는 Edge 서버에, 서버 메모리 캐시는 서버 내부에 위치합니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# Load Balancer - 트래픽 분산
+사용자가 많아지면 서버 한 대로는 버틸 수 없습니다. 그래서 여러 서버에 요청을 분산합니다.
+```
+        LB
+      /    \
+   Server1 Server2
+```
+대표적인 예시로 AWS ALB, Nginx, HAProxy 가 있습니다.
+<br />
+
+### 세션 문제
+서버가 여러 대면 로그인 세션이 꼬일 수 있습니다.
+```
+요청1 → 서버1
+요청2 → 서버2
+```
+그래서 Redis 세션 저장, JWT 인증 등을 사용합니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# Web Server vs Application Server
+
+WebServer (Nginx) 는 주로 정적 파일을 제공하고, Reverse Proxy 며, SSL 을 종료하고
+압축(gzip/brotli) 됩니다.
+```
+Browser → Nginx → Node.js
+```
+Application Server 는 실제 비즈니스 로직을 수행하는 서버로 Node.js, Spring, Django 등이 있습니다.
+<br />
+
+### Reverse Proxy
+Nginx 가 중간에서 요청을 전달합니다.
+```
+Client → Nginx → App Server
+```
+이 구조 덕분에 서버 숨김, SSL 처리, 로드밸런싱, 캐싱 등이 가능한 것입니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# SSR 과 CSR 은 인프라 관점에서 어떻게 다를까?
+
+CSR (Client Side Rendering) 은 아래와 같이 실행됩니다.
+```
+Browser
+ └─ JS 다운로드
+     └─ React 실행
+```
+인터텍션이 강하고, 서버 부하가 적다는 장점이 있지만, 초기 로딩이 느리고 SEO 가 약하다는 단점이 있습니다.
+<br />
+
+SSR (Server Side Rendering) 은 아래와 같이 실행됩니다.
+```
+Server → HTML 생성 → Browser
+```
+SEO 가 유리하고 초기 렌더링이 빠르다는 장점이 있지만, 서버에서 하는 일이 많아지는 만큼
+서버 비용이 증가할 수 있다는 단점이 있습니다.
+
+<br /> <br />
+
+비슷한 관점으로 현재 Next.js 가 인기 있는 이유 중 강력한 하나는 Next 는 SSR 과 SSG, ISR, Edge Rendering 등을
+지원하여 프론트엔드와 인프라의 경계를 줄여주기 때문입니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# API Gateway 와 BFF
+
+대규모 서비스에서는 API 구조도 복잡해집니다. BFF (Backend For Frontend) 는
+```
+Frontend → BFF → 여러 API 서버
+```
+형태로 프론트엔드 전용 API 계층입니다. 화면별 응답이 최적화, API Aggregation,
+클라이언트 로직을 감소할 수 있는 장점이 있습니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# WebSocket 과 실시간 통신
+
+채팅/알림 기능에서 자주 등장하는 기능으로, HTTP 는 기본적으로 요청-응답 기반인 반면,
+WebSocket은 연결을 유지합니다.
+```
+Client !== Server
+```
+따라 실시간 서비스에서 중요한 포인트입니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# 마무리
+
+프론트엔드 개발은 더 이상 단순히 화면만 만드는 일이 아닙니다. 현대 웹 애플리케이션은
+브라우저, CDN, 서버, 네트워크, 캐시, 렌더링 전략 이 모두가 연결된 시스템입니다.
+웹 인프라를 이해하기 시작하면 성능 문제의 원인을 더 빨리 찾고, 배포 장애를 줄이며,
+사용자 경험을 더 깊이 개선할 수 있습니다. <br /> <br />
+
+좋은 프론트엔드 개발자는 결국 '브라우저 너머에서 무슨 일이 일어나는 지 아는 사람'이라고 생각합니다.
