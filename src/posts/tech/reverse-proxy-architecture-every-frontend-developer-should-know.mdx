@@ -1,0 +1,322 @@
+---
+slug: reverse-proxy-architecture-every-frontend-developer-should-know
+title: 프론트엔드 개발자가 알아야 하는 Reverse Proxy 구조
+date: 2026-06-05
+description: Reverse Proxy 의 구조를 이해하기 위해 정리한 글을 공유합니다.
+category: cs
+tag: tech
+---
+
+프론트엔드 개발을 하다 보면 CORS, CDN, 로드 밸런서, API Gateway, Next.js rewrites, Nginx, Cloudflare 같은 단어들을 자주 마주하게 됩니다.
+이 개념들은 서로 독립적으로 보이지만, 실제로는 대부분 Reverse Proxy(리버스 프록시) 구조 위에서 동작합니다.
+
+<br />
+
+특히 최근 프론트엔드 환경은 SPA + API 서버 분리, SSR/ISR, BFF(Backend for Frontend), CDN 기반 Edge Rendering,
+마이크로 프론트엔드, Zero Trust 보안 구조 등으로 발전하면서 Reverse Proxy 이해가 거의 필수가 되었습니다.
+
+<br />
+
+이번 글에서는 Reverse Proxy가 무엇이며 왜 프론트엔드 개발자가 알아야 하는 지, 실제 서비스에서 어떻게 사용되는 지 등을 중심으로 설명해보겠습니다.
+
+<br />
+
+---
+
+<br />
+
+# Proxy란 무엇인가?
+
+먼저 Proxy(프록시) 는 말 그대로 중간 대리자입니다. 브라우저와 서버 사이에서 대신 요청을 전달합니다.
+가장 일반적인 Proxy 구조는 Forward Proxy 로 아래와 같습니다.
+```
+Client → Proxy → Internet
+```
+회사 내부망, VPN, 학교 네트워크, 캐시 서버 등을 예시로 들 수 있으며,
+클라이언트 대신 외부 인터넷에 접근합니다.
+
+<br />
+
+Reverse Proxy 는 그와 반대로 아래와 같은 구조를 가집니다.
+```
+Client → Reverse Proxy → Server
+```
+클라이언트 입장에서는 실제 서버를 직접 모르고, 모든 요청은
+Reverse Proxy 를 먼저 통과합니다. 즉, 서버를 대신 노출하고 요청을 분산하며,
+보안 처리 및 캐싱, 압축, SSL 종료 등을 담당합니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# 전체 구조
+
+많은 프론트엔드 문제들이 사실 Reverse Proxy 레벨에서 발생합니다.
+예를 들어 CORS 에러는 Proxy 설정 문제이고, API 요청 실패는 Gateway routing 문제입니다.
+쿠키 전달이 안 된다면 Proxy 의 header 설정 문제이고 SSR 페이지가 느린 건 CDN 캐싱 문제로 볼 수 있습니다.
+<br />
+
+즉, 프론트엔드 코드만 봐서는 해결이 안 되는 경우가 많습니다.
+
+<br />
+
+현대 웹 서비스는 대량 아래와 같은 구조로 이루어져 있습니다.
+```
+// A안
+Browser
+   ↓
+CDN / Edge
+   ↓
+Reverse Proxy (Nginx)
+   ↓
+Frontend Server (Next.js)
+   ↓
+API Server
+   ↓
+Database
+
+// B안
+Browser
+   ↓
+Cloudflare
+   ↓
+API Gateway
+   ↓
+Microservices
+```
+
+여기서 핵심은 대부분의 요청이 Reverse Proxy 를 반드시 자나간다는 것입니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# Reverse Proxy 가 하는 핵심 역할
+
+### 1. Load Balancing
+트래픽을 여러 서버로 분산합니다.
+```
+           ┌─ Server A
+Client → Proxy
+           └─ Server B
+
+// Nginx 예시:
+upstream api {
+    server api1.example.com;
+    server api2.example.com;
+}
+
+server {
+    location /api {
+        proxy_pass http://api;
+    }
+}
+```
+프론트엔드는 하나의 주소만 알면 됩니다.
+```
+fetch("/api/users")
+```
+실제 서버는 Proxy 가 담당합니다.
+<br />
+
+### 2. SSL/TLS 종료
+
+HTTPS 처리를 Reverse Proxy 가 대신합니다.
+```
+Browser -- HTTPS --> Proxy -- HTTP --> Internal Server
+```
+이렇게 하는 이유는 인증서 관리와 내부 네트워크를 단순하게 하고 CPU 비용을 감소 시킬 수 있기 떄문입니다.
+프론트엔드 입장에서는 Mixed Content, Secure Cookie, HTTPS Redirect, HSTS 등이
+모두 여기와 연결됩니다.
+<br />
+
+### 3. CORS 해결
+개발하면서 가장 많이 보는 사례로 frontend.com -> api.com 에서 브라우저는
+origin 이 다르면 CORS 를 수행합니다. 여기서 Reverse Proxy 로 해결하려면
+frontend.com/api → Reverse Proxy → api.com 로 수행하면, 브라우저 입장에서는
+같은 Origin 처럼 보여 CORS 문제를 해결할 수 있습니다.
+```
+// Next.js 예시:
+async rewrites() {
+  return [
+    {
+      source: "/api/:path*",
+      destination: "https://api.example.com/:path*",
+    },
+  ];
+}
+```
+프론트엔드는:
+```
+fetch("/api/users")
+```
+만 호출하면 됩니다.
+<br />
+
+### 4. 캐싱
+Reverse Proxy 는 응답을 캐싱할 수 있습니다.
+```
+Client
+   ↓
+Proxy Cache HIT
+   ↓
+Response
+```
+특히 이미지, JS bundle, SSR HTML, API 응답에 매우 중요합니다.
+Cloudflare/Vercel/Fastly 모두 이 구조를 사용합니다.
+<br />
+
+### 5. 압축
+브라우저 전송 전에 압축하며 HTML → gzip/brotli → Browser 와 같이 진행됩니다. (프론트엔드
+성능 최적화의 핵심)
+<br />
+
+### 6. 보안
+Reverse Proxy 는 가장 앞단에 있기 때문에 보안의 핵심 지점입니다.
+예시로 Rate Limiting, IP 차단, WAF, Bot 차단, DDoS 방어, Header 필터링 등이 있으며
+Cloudflare 가 대표적입니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# 프론트엔드에서 자주 보는 Reverse Proxy 사례
+
+### Next.js Rewrites
+
+많은 사람들이 이걸 단순 라우팅으로 생각하지만 사실상 Reverse Proxy 입니다.
+```
+rewrites() {
+  return [
+    {
+      source: "/backend/:path*",
+      destination: "https://api.example.com/:path*"
+    }
+  ]
+}
+```
+브라우저는 GET /backend/users 지만 실제로는 GET https://api.example.com/users 로 전달됩니다.
+<br />
+
+### Vite Dev Server Proxy
+개발 환경에서 흔히 사용하는 Reverse Proxy 입니다.
+```
+server: {
+  proxy: {
+    "/api": {
+      target: "http://localhost:8080",
+    },
+  },
+}
+```
+<br />
+
+### Nginx Fronting
+실무에서 매우 흔한 구조입니다.
+```
+Browser
+   ↓
+Nginx
+   ├─ / → React App
+   └─ /api → Spring Server
+```
+
+<br /> <br />
+
+---
+
+<br />
+
+# CDN 도 사실 Reverse Proxy
+
+많은 사람들이 CDN 을 단순 파일 저장소로 생각하지만 실제론 거대한 Reverse Proxy 네트워크입니다.
+```
+Browser
+   ↓
+CDN Edge Server
+   ↓
+Origin Server
+```
+CDN이 하는 일은 캐싱, 압축, 이미지 최적화, TLS, Edge Functions, Bot 차단 등
+거의 "슈퍼 Reverse Proxy"에 가깝습니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# SSR 과 Reverse Proxy
+
+SSR 환경에서는 더 중요해집니다.
+```
+Browser
+   ↓
+CDN
+   ↓
+Reverse Proxy
+   ↓
+Next.js SSR Server
+```
+여기서 HTML 캐싱, Streaming, Compression, Edge Rendering 이 모두
+Proxy 레벨에서 처리됩니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# 웹소켓과 Reverse Proxy
+
+웹소켓 연결은 Proxy 설정이 매우 중요합니다.
+```
+// Nginx 예시
+location /socket {
+    proxy_pass http://websocket;
+
+    proxy_http_version 1.1;
+
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+}
+```
+이 설정이 없으면 실시간 채팅, 알림, 라이브 기능이 동작하지 않습니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# 마무리
+
+Reverse Proxy 는 단순한 인프라 개념이 아닙니다. 현대 프론트엔드는
+CDN, SSR, API Gateway, Edge Runtime, Cloudflare, Vercel, Kubernetes 등과
+긴밀하게 연결되어 있습니다. 그리고 이 모든 것의 중심에는 Reverse Proxy 가 있습니다.
+
+<br />
+
+프론트엔드 개발자가 Reverse Proxy 를 이해하면 디버깅이 빨라지고, 성능 최적화가 쉬워지고
+인프라 구조가 보이며, 서비스 전체 흐름을 이해하게 됩니다. 결국 '브라우저 이후에 무슨 일이 일어나는가'를
+이해하는 첫 번째 단계가 Reverse Proxy 입니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# Reference
+
+- [https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/](https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/)
+- [https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Overview)
+- [https://www.cloudflare.com/learning/cdn/glossary/reverse-proxy/](https://www.cloudflare.com/learning/cdn/glossary/reverse-proxy/)
+- [https://nextjs.org/docs/app/api-reference/config/next-config-js/rewrites](https://nextjs.org/docs/app/api-reference/config/next-config-js/rewrites)
+- [https://docs.aws.amazon.com/elasticloadbalancing/](https://docs.aws.amazon.com/elasticloadbalancing/)
