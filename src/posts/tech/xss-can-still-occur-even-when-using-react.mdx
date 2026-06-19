@@ -1,0 +1,262 @@
+---
+slug: xss-can-still-occur-even-when-using-react
+title: React를 사용해도 XSS는 발생할 수 있다
+date: 2026-06-18
+description: React의 XSS 방어 메커니즘과, 그럼에도 불구하고 XSS가 발생하는 대표적인 사례들을 공유합니다.
+category: cs
+tag: tech
+---
+
+"React는 기본적으로 XSS를 방어해준다." 반은 맞고 반은 틀린 이야기입니다. <br /> <br />
+React 는 JSX 에 렌더링되는 문자열을 자동으로 Escape 처리하기 때문에 일반적인 DOM 기반 XSS를 상당 부분 방어합니다.
+하지만 이것이 "React 애플리케이션에서는 XSS가 발생하지 않는다" 를 의미하지는 않습니다.
+실제로 React 애플리케이션에서도 다양한 형태의 XSS 취약점이 발생하며, 특히 사용자 입력을 HTML로 렌더링하거나 외부 라이브러리를
+사용할 때 쉽게 노출될 수 있습니다. 이번 글에서는 React의 XSS 방어 매커니즘과, 그럼에도 불구하고 XSS 가 발생하는 대표적인 사례들을 살펴보고자 합니다.
+
+<br />
+
+---
+
+<br />
+
+# XSS(Cross-Site Scripting)
+
+XSS는 공격자가 악성 스크립트를 웹 페이지에 삽입하여 다른 사용자의 브라우저에서 실행되도록
+만드는 공격입니다. 예를 들어 댓글 기능이 있는 서비스에서 아래와 같은 입력을 허용한다고
+가정해보겠습니다.
+```
+<script>alert('XSS');</script>
+```
+이 내용이 그대로 화면에 렌더링되면 방문자의 브라우저에서 JavaScript가 실행됩니다.
+실제 공격에서는 단순 알럿이 아니라 Session 및 JWT 탈취, 피싱 페이지 삽입,
+사용자 계정 권한으로 API 호출, 악성 사이트 리다이렉트 등의 행위가 가능해집니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# React는 어떻게 XSS를 막을까?
+
+일반적인 JavaScript 에서는 다음과 같이 작성할 수 있습니다.
+```
+element.innerHTML = userInput;
+```
+만약 userInput이 아래 값이라면
+```
+<script>alert('XSS')</script>
+```
+브라우저는 이를 HTML 로 해석하여 스크립트를 실행합니다.
+<br />
+
+하지만 React 에서는 JSX를 렌더링할 때 기본적으로 문자열을 Escape 처리합니다.
+```
+function App() {
+  const userInput = "<script>alert('XSS')</script>";
+
+  return <div>{userInput}</div>;
+}
+```
+그러면 결과 화면에는 `<script>alert('XSS')</script>` 문자열이 그대로 나와
+스크립트가 실행되지 않습니다. 이건 React 의 기본 동작과도 연관이 되는데요.
+```
+사용자 입력
+      ↓
+React Escape 처리
+      ↓
+Text Node 렌더링
+      ↓
+브라우저가 HTML로 해석하지 않음
+```
+이 때문에 React는 기본적으로 상당수의 XSS 공격을 차단할 수 있습니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# 그런데 왜 React 에서도 XSS 가 발생할까?
+
+React 의 방어 매커니즘을 개발자가 우회하는 순간 문제가 발생합니다.
+<br />
+
+### 사례 1. dangerouslySetInnerHTML
+React는 HTML 문자열 렌더링을 기본적으로 급지합니다. 하지만 dangerouslySetInnerHTML API 를
+사용하면 HTML 을 직접 삽입할 수 있습니다.
+```
+<div
+  dangerouslySetInnerHTML={{
+    __html: content,
+  }}
+/>
+```
+React 는 더 이상 Escape 를 수행하지 않고, 브라우저는 문자열을 실제 HTML 로 해석하게 됩니다.
+공격흐름은 아래와 같습니다.
+```
+사용자 입력
+      ↓
+DB 저장
+      ↓
+dangerouslySetInnerHTML
+      ↓
+브라우저 HTML 파싱
+      ↓
+스크립트 실행
+```
+<br />
+
+### 사례 2. 마크다운 렌더러
+
+최근에는 Markdown Editor를 사용하는 서비스가 많습니다. 예로 블로그, 위키, 문서 서비스,
+커뮤니티 등이 있는데 이에 개발자는 흔히 다음과 같이 구현합니다.
+```
+<ReactMarkdown>
+  {content}
+</ReactMarkdown>
+```
+문제는 특정 옵션이나 플러그인을 사용할 경우 아래처럼 HTML 태그 허용이 가능하다는 점입니다.
+```
+<script>
+alert('XSS')
+</script>
+```
+HTML Sanitization이 없다면 공격 코드가 렌더링 될 수 있습니다.
+<br />
+
+### 사례 3. Sanitization 누락
+아래와 같은 코드를 작성하는 경우들이 있는데요,
+```
+<div
+  dangerouslySetInnerHTML={{
+    __html: content,
+  }}
+/>
+```
+그리고 '우리 서비스는 관리자만 작성 가능하니까 괜찮다' 고 생각하는데
+실제 서비스에서는 관리자 계정 탈취, 운영툴 입력값 오염, 외부 API 응답 오염, CMS 데이터 변조 등으로
+결국 신뢰할 수 있는 데이터라고 생각했던 값이 공격 벡터가 됩니다.
+<br />
+
+### 사례 4. href 속성 기반 XSS
+React 는 HTML Escape는 해주지만 URL 검증까지 해주지는 않습니다.
+```
+<a href={userInput}>링크</a>
+
+// 공격자가 입력
+javascript:alert(document.cookie)
+
+// 결과
+a href="javascript:alert(document.cookie)">
+```
+사용자가 클릭하는 순간 스크립트가 실행됩니다.
+```
+const url = "javascript:alert('XSS')";
+
+return <a href={url}>Click me</a>;
+```
+위와 같이 공격할 경우 사용자는 정상 링크로 오인할 수 있습니다.
+<br />
+
+### 사례 5. 서드파티 라이브러리
+제 생각에 실제 React 프로젝트에서 가장 위험한 경우 중 하나라고 생각하는데요.
+예를 들어 아래와 같이 사용할 때 일부 라이브러리는 내부적으로 'innerHTML' 을 사용합니다.
+```
+Rich Text Editor
+Markdown Parser
+Chart Library
+Widget SDK
+광고 스크립트
+```
+개발자가 직접 'dangerouslySetInnerHTML' 을 사용하지 않더라도 라이브러리 내부에서
+XSS가 발생할 수 있습니다. 실제로 npm 생태계에서는 이런 취약점이 꾸준히 발견됩니다.
+
+<br />
+
+React 는 '문자열을 안전하게 렌더링'하는 역할은 하지만 '애플리케이션 전체의 XSS 를 방어'하지는
+않기 때문에 React의 Escape 만 믿으면 안 됩니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# 어떻게 방어해야 할까?
+
+### 1. dangerouslySetInnerHTML 최소화
+가능하면 사용하지 않는 게 가장 좋습니다. `<div>{content}</div>` 가 가장 안전합니다.
+<br />
+
+### 2.DOMPurify 사용
+HTML 렌더링이 반드시 필요하다면 Sanitization을 수행합니다.
+```
+// 설치
+npm install dompurify
+
+// 사용 예시
+import DOMPurify from "dompurify";
+
+const safeHtml = DOMPurify.sanitize(content);
+
+<div
+  dangerouslySetInnerHTML={{
+    __html: safeHtml,
+  }}
+/>
+```
+<br />
+
+### URL 검증
+아래와 같은 방식으로 href url 검증을 수행합니다.
+```
+function isSafeUrl(url) {
+  return url.startsWith("https://");
+}
+
+// 사용처
+<a href={isSafeUrl(url) ? url : "#"}>
+  Link
+</a>
+```
+<br />
+
+### CSP(Content Security Policy) 적용
+CSP는 XSS가 발생하더라도 피해를 크게 줄여줍니다.
+```
+Content-Security-Policy:
+  default-src 'self';
+  script-src 'self';
+```
+
+<br /> <br />
+
+---
+
+<br />
+
+# 마무리
+
+React 는 기본적으로 문자열을 Escape 처리하여 많은 XSS 공격을 차단합니다.
+하지만 dangerouslySetInnerHTML, 마크다운 렌더링, 외부라이브러리, URL 기반 공격 등의 순간부터
+React의 보호 범위를 벗어나게 됩니다. 따라서 'React를 사용하니까 XSS는 안전하다'가 아니라
+'React는 기본적인 XSS 방어를 제공하지만, 개발자가 이를 우회하는 순간 XSS는 언제든 발생할 수 있다'라고
+이해하는 것이 더 정확합니다.
+
+<br />
+
+보안은 프레임워크가 대신 책임져주는 기능이 아니라, 개발자가 지속적으로 검증하고 방어해야 하는
+영역입니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# Reference
+
+- [https://react.dev/reference/react-dom/components/common#dangerously-setting-the-inner-html](https://react.dev/reference/react-dom/components/common#dangerously-setting-the-inner-html)
+- [https://owasp.org/www-community/attacks/xss/](https://owasp.org/www-community/attacks/xss/)
+- [https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP)
