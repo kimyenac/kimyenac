@@ -1,0 +1,135 @@
+---
+slug: next-and-react
+title: Next.js를 쓰는 이유와 React만으로 충분한 경우
+date: 2026-08-08
+description: Next.js를 사용하는 이유와 React만으로 충분한 경우를 정리하여 공유합니다.
+category: react
+tag: tech
+---
+
+# React와 Next.js의 관계
+
+먼저 오해하기 쉬운 부분부터 정리하면, React와 Next.js는 경쟁 관계가 아닙니다.
+```
+React = UI 라이브러리
+Next.js = React 기반 프레임워크
+```
+React는 화면을 구성하기 위한 라이브러리이고, Next.js는 React를 기반으로
+SSR, SSG, Routing, API Routes, Middleware, SEO 최적화 등을 추가 제공합니다.
+
+<br />
+
+즉, React 가 엔진이라면 Next.js는 엔진을 포함한 완성차에 가깝습니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# Next.js를 사용하는 이유
+
+첫 번째로 <b>SEO가 중요한 서비스</b>입니다. React SPA는 기본적으로 브라우저가 JS를 실행한 이후
+화면이 렌더링 되는데, 이때 초기 HTML에는 실제 콘텐츠가 존재하지 않습니다.
+검색 엔진 크롤러가 JS를 완전히 실행하지 못하는 경우 검색 노출에 불리할 수 있습니다.
+반면 NextJS 는 서버에서 HTML 을 미리 생성합니다. 검색 엔진은 완성된 HTML 을 즉시 수집할 수 있고,
+대표적인 사례로 블로그, 뉴스 서비스, 쇼핑몰, 랜딩 페이지, 마케팅 사이트 등이 있습니다.
+
+<br />
+
+두 번째로 <b>초기 로딩 성능을 개선해야 되는 경우</b> 입니다. React SPA 는 JS 다운로드 -> React 실행
+-> 데이터 요청 -> 렌더링 과정을 거치는데 이때 사용자는 빈 화면을 보게 될 가능성이 있습니다. 반면
+NextJS의 SSR 은 서버 렌더링 -> HTML 전달 -> 즉시 화면을 표시하기 때문에 최초 콘텐츠 표시(FCP)가 빨라질 수 있습니다.
+특히 상품 상세 페이지, 검색 결과 페이지, 콘텐츠 서비스 같은 경우 체감 성능 차이가 큽니다.
+
+<br />
+
+세 번째로 <b>파일 기반 라우팅을 지원한다는 것</b> 입니다. React 만 사용할 경우 일반적으로
+React Router 를 설치해서 사용해야 되는데, NextJS는 폴더 구조만으로 라우팅이 생성됩니다.
+
+<br />
+
+네 번째로 <b>서버 컴포넌트를 활용할 수 있다는 것</b> 입니다. NextJS 13 이후 가장 큰 변화라고 할 수 있는데
+예전에는 useEffect 내에서 fetch 를 쓰는 형태로 클라이언트에서 데이터를 가져왔다면
+서버 컴포넌트에서는 아래 처럼 서버에서 데이터를 준비한 후 HTML을 생성할 수 있습니다.
+```
+async function Page() {
+  const data = await fetch(...)
+}
+```
+이에 장점은 번들 크기와 클라이언트 JS가 감소되고 성능은 향상시킬 수 있다는 점입니다.
+
+<br />
+
+다섯 번째로 <b>풀스택 개발이 가능하다는 점</b> 입니다. NextJS 는 API Route를 제공해서
+간단한 서비스는 별도의 백엔드 없이도 구현할 수 있습니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# React 만으로 충분한 경우
+
+모든 서비스가 NextJS 를 필요로 하는 것은 아니여서 React 만 사용하는 것이 더 적합한 경우도 많습니다.
+
+<br />
+
+첫 번째로, SEO가 필요없는 내부 서비스입니다. 대표적으로 Admin, CMS, ERP, Dashboard, 사내도구와 같은
+사용자가 이미 URL 을 알고 접근하는 경우입니다.
+
+<br />
+
+두 번째로, 로그인 이후 화면이 대부분인 서비스입니다. 예를 들어 Slack, Jira, Figma, Notion
+같은 서비스는 로그인 이후 대부분의 데이터를 API 로 가져옵니다.
+SSR을 해도 결국 로그인 상태를 확인하고 다시 데이터를 가져와야 하기 때문에 이 경우 SSR 이점이 크지 않습니다.
+
+<br />
+
+세 번째로, 실시간 인터랙션 중심 서비스입니다. 예를 들어 채팅, 화상회의, 협업툴, 그래프 대시보드 같은
+서비스는 렌더링보다 상태관리가 더 중요합니다.
+```
+WebSocket
+Realtime Data
+State Synchronization
+```
+이 핵심이므로 React SPA 만으로 충분한 경우가 많습니다.
+
+<br />
+
+네 번째로 이벤트 페이지, 사내 운영툴처럼 단순한 규모의 프로젝트입니다.
+Next.js의 SSR, ISR, RSC 등을 모두 고려하는 것이 오히려 복잡성을 증가시킬 수 있어
+React SPA 만으로 충분한 경우가 많습니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# 마무리
+
+React 와 NextJS 는 경쟁 관계가 아닙니다.
+중요한 것은 "어떤 문제를 해결하려고 하는가" 입니다.
+
+<br />
+
+Next.js는 SEO, 성능, 서버 렌더링이 필요한 서비스에 강력한 선택지고,
+내부 어드민, 대시보드, 협업 도구처럼 검색 유입이 필요없는 서비스의 경우
+React SPA 만으로도 충분합니다.
+
+<br />
+
+기술 선택은 유행이 아니라 문제 해결 관점에서 이루어져야 합니다.
+
+<br /> <br />
+
+---
+
+<br />
+
+# Reference
+
+- [https://nextjs.org/docs?utm_source=chatgpt.com](https://nextjs.org/docs?utm_source=chatgpt.com)
+- [https://react.dev/?utm_source=chatgpt.com](https://react.dev/?utm_source=chatgpt.com)
